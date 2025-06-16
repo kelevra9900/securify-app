@@ -1,10 +1,12 @@
 import type {JSX} from 'react';
 import React,{useEffect} from 'react';
-import {BottomTabBarProps,createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import type {SvgProps} from 'react-native-svg';
 
-import {Paths,TabParamList} from '../paths';
-import {Home,Map,MessageSquare,FileText,User} from 'lucide-react-native';
+import type {TabParamList} from '../paths';
+import {Paths} from '../paths';
+import {FileText,Home,Map,MessageSquare,User} from 'lucide-react-native';
 import {ChatScreen,HomeScreen,ProfileScreen,ReportsScreen,RoundsScreen} from '@/screens';
 import {Animated,StyleSheet,TouchableOpacity,View} from 'react-native';
 import {colors} from '@/assets/theme/colors';
@@ -14,6 +16,7 @@ import {CSafeAreaView,TextLabel} from '@/components/atoms';
 const Tab = createBottomTabNavigator<TabParamList>();
 
 type TabConfigItem = {
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	component: any;
 	icon: (props: SvgProps) => JSX.Element;
 	label: string;

@@ -1,9 +1,13 @@
-import {ActivityIndicator,Text,View,StyleSheet} from 'react-native';
+import {ActivityIndicator,StyleSheet,View} from 'react-native';
+import {Search} from 'lucide-react-native'
+import {TextLabel} from '@/components/atoms'
 
 const LoadingSpinner = () => (
 	<View style={styles.container}>
 		<ActivityIndicator size="large" />
-		<Text style={styles.text}>Verificando identidad...</Text>
+		<TextLabel align="center" style={styles.text} type="R16">
+			<Search color="#007AFF" size={24} />
+		</TextLabel>
 	</View>
 );
 
@@ -11,5 +15,5 @@ export default LoadingSpinner;
 
 const styles = StyleSheet.create({
 	container: {alignItems: 'center'},
-	text: {marginTop: 10,fontSize: 16},
+	text: {fontSize: 16,marginTop: 10},
 });

@@ -1,14 +1,14 @@
 import {PrimaryButton,TextLabel} from '@/components/atoms';
-import {View,TouchableOpacity,Text,StyleSheet} from 'react-native';
+import {StyleSheet,Text,TouchableOpacity,View} from 'react-native';
 
-const FaceRecognitionInstructions = ({onTakePhoto,onCancel}: {onTakePhoto: () => void; onCancel: () => void}) => (
+const FaceRecognitionInstructions = ({onCancel,onTakePhoto}: {onCancel: () => void; onTakePhoto: () => void;}) => (
 	<View style={{alignItems: 'center'}}>
-		<TextLabel type="R20" align="center" style={{marginBottom: 20}}>
-			Para verificar tu identidad, por favor toma una foto de tu rostro. Asegúrate de que tu cara esté bien iluminada y visible.Asegúrate de estar bien iluminado y visible
+		<TextLabel align="center" style={{marginBottom: 20}} type="R20">
+			Asegúrate de que tu rostro esté bien iluminado y visible dentro del marco.
 		</TextLabel>
 		<PrimaryButton label="Tomar foto" onPress={onTakePhoto} />
 		<TouchableOpacity onPress={onCancel}>
-			<Text style={styles.cancel}>Cancelar</Text>
+			<Text style={styles.cancel}>Cancelar y volver</Text>
 		</TouchableOpacity>
 	</View>
 );
@@ -18,7 +18,7 @@ export default FaceRecognitionInstructions;
 const styles = StyleSheet.create({
 	cancel: {
 		color: '#555',
-		textDecorationLine: 'underline',
-		marginTop: 10
+		marginTop: 10,
+		textDecorationLine: 'underline'
 	},
 });

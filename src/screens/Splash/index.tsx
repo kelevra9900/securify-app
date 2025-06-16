@@ -1,8 +1,8 @@
 import {useEffect} from "react";
-import {View,Text} from "react-native";
+import {Text,View} from "react-native";
 
 import {Paths} from "@/navigation/paths";
-import {RootScreenProps} from "@/navigation/types";
+import type {RootScreenProps} from "@/navigation/types";
 
 const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
 	useEffect(() => {
@@ -11,9 +11,11 @@ const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
 		},2000);
 
 		return () => clearTimeout(timer);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	},[]);
+
 	return (
-		<View style={{flex: 1,justifyContent: 'center',alignItems: 'center'}}>
+		<View style={{alignItems: 'center',flex: 1,justifyContent: 'center'}}>
 			<View>
 				<Text>Loading...</Text>
 			</View>

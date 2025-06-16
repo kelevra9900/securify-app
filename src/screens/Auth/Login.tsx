@@ -1,9 +1,11 @@
 import React,{useState} from 'react';
 import {LoginTemplate} from '@/components/templates';
 import {LoginSteps} from '@/components/organisms';
+import type {RootScreenProps} from '@/navigation/types';
+import {Paths} from '@/navigation/paths';
 
-const LoginScreen = () => {
-	const [step,setStep] = useState<'welcome' | 'camera' | 'loading' | 'success' | 'error'>('welcome');
+const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
+	const [step,setStep] = useState<'camera' | 'error' | 'loading' | 'success' | 'welcome'>('welcome');
 
 	const handleTakePhoto = () => {
 		setStep('loading');
@@ -16,11 +18,12 @@ const LoginScreen = () => {
 	return (
 		<LoginTemplate>
 			<LoginSteps
-				step={step}
+				onCancel={() => setStep('welcome')}
+				onContinue={() => navigation.navigate(Paths.TabBarNavigation)}
+				onRetry={() => setStep('camera')}
 				onStart={() => setStep('camera')}
 				onTakePhoto={handleTakePhoto}
-				onRetry={() => setStep('camera')}
-				onCancel={() => setStep('welcome')}
+				step={step}
 			/>
 		</LoginTemplate>
 	);
