@@ -9,10 +9,7 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
 
 	const handleTakePhoto = () => {
 		setStep('loading');
-		setTimeout(() => {
-			const success = Math.random() > 0.3;
-			setStep(success ? 'success' : 'error');
-		},2000);
+		navigation.navigate(Paths.FaceCamera)
 	};
 
 	return (

@@ -1,19 +1,41 @@
+// src/components/atoms/LoadingSpinner.tsx
 import {ActivityIndicator,StyleSheet,View} from 'react-native';
-import {Search} from 'lucide-react-native'
-import {TextLabel} from '@/components/atoms'
+import {TextLabel} from '@/components/atoms';
+import {useTheme} from '@/context/Theme';
 
-const LoadingSpinner = () => (
-	<View style={styles.container}>
-		<ActivityIndicator size="large" />
-		<TextLabel align="center" style={styles.text} type="R16">
-			<Search color="#007AFF" size={24} />
-		</TextLabel>
-	</View>
-);
+type Props = {
+	text?: string;
+};
+
+const LoadingSpinner = ({text = ''}: Props) => {
+	const {theme} = useTheme();
+
+	return (
+		<View style={styles.container}>
+			<ActivityIndicator color={theme.highlight} size="large" />
+			<TextLabel align="center" style={[styles.text,{color: theme.textPrimary}]} type="B16">
+				{text || 'Cargando...'}
+			</TextLabel>
+		</View>
+	);
+};
 
 export default LoadingSpinner;
 
 const styles = StyleSheet.create({
-	container: {alignItems: 'center'},
-	text: {fontSize: 16,marginTop: 10},
+	container: {
+		alignItems: 'center',
+		gap: 16,
+	},
+	iconContainer: {
+		alignItems: 'center',
+		borderRadius: 32,
+		height: 64,
+		justifyContent: 'center',
+		marginBottom: 8,
+		width: 64,
+	},
+	text: {
+		fontSize: 16,
+	},
 });

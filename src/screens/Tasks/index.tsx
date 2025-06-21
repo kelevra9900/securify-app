@@ -2,12 +2,12 @@ import {View} from "react-native";
 
 const TasksScreen = () => {
 	return (
-		<View style={{flex: 1,justifyContent: 'center',alignItems: 'center'}}>
-			<View style={{width: 200,height: 200,backgroundColor: 'lightblue',justifyContent: 'center',alignItems: 'center'}}>
-				<View style={{width: 100,height: 100,backgroundColor: 'blue'}} />
+		<View style={{alignItems: 'center',flex: 1,justifyContent: 'center'}}>
+			<View style={{alignItems: 'center',backgroundColor: 'lightblue',height: 200,justifyContent: 'center',width: 200}}>
+				<View style={{backgroundColor: 'blue',height: 100,width: 100}} />
 			</View>
-			<View style={{width: 200,height: 200,backgroundColor: 'lightgreen',justifyContent: 'center',alignItems: 'center'}}>
-				<View style={{width: 100,height: 100,backgroundColor: 'green'}} />
+			<View style={{alignItems: 'center',backgroundColor: 'lightgreen',height: 200,justifyContent: 'center',width: 200}}>
+				<View style={{backgroundColor: 'green',height: 100,width: 100}} />
 			</View>
 		</View>
 	)

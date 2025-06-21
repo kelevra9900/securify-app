@@ -93,7 +93,7 @@ const CustomTabBar = ({descriptors,navigation,state}: BottomTabBarProps) => {
 
 export default function TabNavigation() {
 	return (
-		<CSafeAreaView edges={['bottom']} style={{backgroundColor: colors.white,flex: 1}}>
+		<CSafeAreaView edges={['bottom']} style={{backgroundColor: colors.backgroundDark,flex: 1}}>
 			<Tab.Navigator screenOptions={{headerShown: false}} tabBar={(props) => <CustomTabBar {...props} />}>
 				{TAB_CONFIG.map(tab => (
 					<Tab.Screen component={tab.component} key={tab.name} name={tab.name} />

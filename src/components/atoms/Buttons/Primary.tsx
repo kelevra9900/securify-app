@@ -1,13 +1,35 @@
-import {TouchableOpacity,Text,StyleSheet} from 'react-native';
+// src/components/atoms/PrimaryButton.tsx
+import React from 'react';
+import {StyleSheet,Text,TouchableOpacity} from 'react-native';
+import {useTheme} from '@/context/Theme';
 
-const PrimaryButton = ({label,onPress}: {label: string; onPress: () => void}) => (
-	<TouchableOpacity style={styles.button} onPress={onPress}>
-		<Text style={styles.text}>{label}</Text>
-	</TouchableOpacity>
-);
+type Props = {
+	label: string;
+	onPress: () => void;
+};
+
+const PrimaryButton = ({label,onPress}: Props) => {
+	const {theme} = useTheme();
+
+	return (
+		<TouchableOpacity onPress={onPress} style={[styles.button,{backgroundColor: theme.highlight}]}>
+			<Text style={[styles.text,{color: theme.textPrimary}]}>{label}</Text>
+		</TouchableOpacity>
+	);
+};
+
 export default PrimaryButton;
 
 const styles = StyleSheet.create({
-	button: {backgroundColor: '#007AFF',paddingVertical: 12,paddingHorizontal: 24,borderRadius: 8,marginBottom: 10},
-	text: {color: '#fff',fontSize: 16,fontWeight: '600',textAlign: 'center'},
+	button: {
+		borderRadius: 8,
+		marginBottom: 10,
+		paddingHorizontal: 24,
+		paddingVertical: 12,
+	},
+	text: {
+		fontSize: 16,
+		fontWeight: '600',
+		textAlign: 'center',
+	},
 });

@@ -15,6 +15,15 @@ export const colors = {
 	blueColor2: '#5868E3',
 	borderColor1: '#E0E0E0',
 	darkPurple: '#070022',
+	darkTheme: {
+		background: '#1A1A2E',
+		border: '#0F3460',
+		cardBackground: '#16213E',
+		highlight: '#E94560',
+		textMuted: '#0F3460',
+		textPrimary: '#FFFFFF',
+		textSecondary: '#E94560',
+	},
 	dropShadow: '#B5ADD814',
 	errorBackground: '#FAE3E3',
 	gray: '#B7B7B7',
@@ -25,6 +34,15 @@ export const colors = {
 	lightPurple: '#AE92FF',
 	lightPurpleBackground: '#F9F7FF',
 	lightRed: '#FAE3E3',
+	lightTheme: {
+		background: '#F9F7FF',
+		border: '#E0E0E0',
+		cardBackground: '#FFFFFF',
+		error: '#E94560',
+		highlight: '#0F3460',
+		textPrimary: '#141938',
+		textSecondary: '#677489',
+	},
 	link: '#4F12FF',
 	orangeColor1: '#FF8050',
 	primaryDark: '#1D3C34',
@@ -69,3 +87,31 @@ export const colors = {
 
 	transparent: 'transparent',
 };
+
+
+export const lightTheme = {
+	background: '#F9F7FF',
+	border: '#E0E0E0',
+	cardBackground: '#FFFFFF',
+	error: '#E94560',
+	highlight: '#0F3460',
+	textPrimary: '#141938',
+	textSecondary: '#677489',
+};
+
+export const darkTheme = {
+	background: '#1A1A2E',
+	border: '#0F3460',
+	cardBackground: '#16213E',
+	error: '#E94560',
+	highlight: '#0F3460',
+	textPrimary: '#FFFFFF',
+	textSecondary: '#E94560',
+};
+
+export const themes = {
+	dark: darkTheme,
+	light: lightTheme,
+};
+
+export type ThemeType = typeof lightTheme;
