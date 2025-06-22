@@ -1,8 +1,11 @@
 import type {UseMutationResult} from '@tanstack/react-query';
 import {useMutation} from '@tanstack/react-query';
+import {useDispatch} from 'react-redux';
+
 import {recognizeFace} from '@/data/services/faceRecognition';
 import {flashError,flashSuccess} from '@/utils/flashMessageHelper';
 import type {BiometricsResponse} from '@/types/biometrics';
+import {setCredentials} from '@/store/reducers/auth';
 
 export interface RecognizeFacePayload {
 	file: File;
@@ -15,15 +18,20 @@ export const useFaceRecognition = (): UseMutationResult<
 	Error,
 	RecognizeFacePayload
 > => {
+	const dispatch = useDispatch();
+
 	return useMutation({
 		mutationFn: recognizeFace,
 		onError: (error: Error) => {
-			// eslint-disable-next-line no-console
-			console.error('Face recognition failed:',error);
 			flashError('No se pudo reconocer tu rostro',error.message);
 		},
 		onSuccess: (data) => {
-			flashSuccess('Reconocimiento exitoso',`Confianza: ${data.message}%`);
+			if ('jwt' in data) {
+				dispatch(setCredentials({token: data.jwt}));
+				flashSuccess('Inicio de sesión exitoso');
+			} else {
+				flashError('Acceso denegado',data.message);
+			}
 		},
 	});
 };

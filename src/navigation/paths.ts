@@ -1,5 +1,7 @@
 export const enum Paths {
 	Chat = 'chat',
+	ChatDetail = 'chatDetail',
+	CreateReport = 'createReport',
 	FaceCamera = 'faceCamera',
 	Home = 'home',
 	Login = 'login',

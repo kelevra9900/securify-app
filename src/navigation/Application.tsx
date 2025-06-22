@@ -7,6 +7,8 @@ import type {RootStackParamList} from './types';
 import {Paths} from './paths';
 
 import {
+	ChatDetailScreen,
+	CreateReportScreen,
 	FaceCameraScreen,
 	LoginScreen,
 	SplashScreen,
@@ -31,6 +33,8 @@ function ApplicationNavigator() {
 							<Stack.Screen component={LoginScreen} name={Paths.Login} />
 							<Stack.Screen component={TabBarNavigation} name={Paths.TabBarNavigation} options={{headerShown: false}} />
 							<Stack.Screen component={TasksScreen} name={Paths.Tasks} options={{headerShown: false}} />
+							<Stack.Screen component={CreateReportScreen} name={Paths.CreateReport} />
+							<Stack.Screen component={ChatDetailScreen} name={Paths.ChatDetail} />
 							<Stack.Screen
 								component={FaceCameraScreen}
 								name={Paths.FaceCamera}

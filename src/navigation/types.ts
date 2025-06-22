@@ -4,6 +4,8 @@ import type {Paths} from "./paths"
 
 export type RootStackParamList = {
 	[Paths.Chat]: undefined;
+	[Paths.ChatDetail]: undefined;
+	[Paths.CreateReport]: undefined;
 	[Paths.FaceCamera]: undefined;
 	[Paths.Home]: undefined;
 	[Paths.Login]: undefined;

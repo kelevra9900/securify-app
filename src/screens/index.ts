@@ -1,5 +1,7 @@
 export {default as LoginScreen} from './Auth/Login';
 export {default as FaceCameraScreen} from './FaceCamera';
+export {default as ChatDetailScreen} from './Root/Chat/detail';
+export {default as CreateReportScreen} from './Root/Reports/create';
 export {default as SplashScreen} from './Splash';
 export {default as TasksScreen} from './Tasks';
 //* Tabs screens

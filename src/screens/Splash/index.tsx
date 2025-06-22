@@ -6,20 +6,27 @@ import {Paths} from "@/navigation/paths";
 import type {RootScreenProps} from "@/navigation/types";
 import {useTheme} from "@/context/Theme";
 import {getHeight,getWidth} from "@/constants";
+import {useSelector} from "react-redux";
+import type {RootState} from "@/store";
 
 const IMAGE_WIDTH = 331;
 const IMAGE_HEIGHT = 747;
 
 const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
 	const {theme} = useTheme();
+	const session = useSelector((state: RootState) => state.auth);
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
-			navigation.navigate(Paths.Login);
+			if (session.isAuthenticated) {
+				navigation.navigate(Paths.TabBarNavigation);
+			} else {
+				navigation.navigate(Paths.Login);
+			}
 		},2000);
 
 		return () => clearTimeout(timer);
-	},[navigation]);
+	},[navigation,session.isAuthenticated]);
 
 	return (
 		<View style={[styles.container,{backgroundColor: theme.background}]}>

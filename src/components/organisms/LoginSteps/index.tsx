@@ -9,6 +9,7 @@ import {
 } from '@/components/molecules';
 import {getHeight,getWidth,moderateScale} from '@/constants';
 import {useTheme} from '@/context/Theme';
+import {colors} from '@/assets/theme';
 
 type Props = {
 	onCancel: () => void;
@@ -115,7 +116,9 @@ const styles = StyleSheet.create({
 	},
 	card: {
 		alignItems: 'center',
+		backgroundColor: colors.gray,
 		borderRadius: 20,
+		borderWidth: 1,
 		elevation: 6,
 		maxWidth: moderateScale(360),
 		paddingHorizontal: 24,

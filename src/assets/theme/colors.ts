@@ -93,6 +93,7 @@ export const lightTheme = {
 	background: '#F9F7FF',
 	border: '#E0E0E0',
 	cardBackground: '#FFFFFF',
+	disabled: '#ccc',
 	error: '#E94560',
 	highlight: '#0F3460',
 	textPrimary: '#141938',
@@ -101,13 +102,15 @@ export const lightTheme = {
 
 export const darkTheme = {
 	background: '#1A1A2E',
-	border: '#0F3460',
+	border: '#2C3E50',
 	cardBackground: '#16213E',
+	disabled: '#ccc',
 	error: '#E94560',
-	highlight: '#0F3460',
+	highlight: '#5C7AEA',
 	textPrimary: '#FFFFFF',
-	textSecondary: '#E94560',
+	textSecondary: '#B0BEC5',
 };
+
 
 export const themes = {
 	dark: darkTheme,

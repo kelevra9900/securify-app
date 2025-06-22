@@ -1,32 +1,52 @@
+// src/utils/flashMessageHelper.ts
 import {hideMessage,showMessage} from 'react-native-flash-message';
-import type {TextStyle,ViewStyle} from 'react-native';
+import type {TextStyle} from 'react-native';
 import {CheckCircle,Info,XCircle} from 'lucide-react-native';
 import {colors} from '@/assets/theme';
 
 type FlashType = 'danger' | 'info' | 'success';
 
-const getBaseStyles = () => ({
-	backgroundColor: colors.backgroundDark,
-	color: colors.white,
-	textStyle: {
+const getStyles = (type: FlashType) => {
+	const baseBackground = '#1C1C1E';
+	const successColor = '#2ECC71';
+	const errorColor = '#E74C3C';
+	const infoColor = '#3498DB';
+
+	let backgroundColor = baseBackground;
+
+	switch (type) {
+		case 'danger':
+			backgroundColor = errorColor;
+			break;
+		case 'info':
+			backgroundColor = infoColor;
+			break;
+		case 'success':
+			backgroundColor = successColor;
+			break;
+	}
+
+	return {
+		backgroundColor,
 		color: colors.white,
-		fontSize: 14,
-		opacity: 0.8,
-	},
-	titleStyle: {
-		color: colors.white,
-		fontSize: 16,
-		fontWeight: '700' as TextStyle['fontWeight'],
-	},
-} satisfies {
-	backgroundColor: ViewStyle['backgroundColor'];
-	color: TextStyle['color'];
-	textStyle: TextStyle;
-	titleStyle: TextStyle;
-});
+		textStyle: {
+			color: colors.white,
+			fontSize: 13,
+			fontWeight: '400' as TextStyle['fontWeight'],
+			marginLeft: 8,
+			marginTop: 2,
+		},
+		titleStyle: {
+			color: colors.white,
+			fontSize: 15,
+			fontWeight: '600' as TextStyle['fontWeight'],
+			marginLeft: 8,
+		},
+	};
+};
 
 const getIcon = (type: FlashType) => {
-	const iconProps = {color: colors.white,size: 24};
+	const iconProps = {color: colors.white,size: 22,strokeWidth: 2};
 	switch (type) {
 		case 'danger':
 			return () => <XCircle {...iconProps} />;
@@ -40,29 +60,41 @@ const getIcon = (type: FlashType) => {
 
 export const flashSuccess = (message: string,description?: string) =>
 	showMessage({
+		animated: true,
+		autoHide: true,
 		description,
+		duration: 3000,
 		icon: getIcon('success'),
 		message,
+		position: 'top',
 		type: 'success',
-		...getBaseStyles(),
+		...getStyles('success'),
 	});
 
 export const flashError = (message: string,description?: string) =>
 	showMessage({
+		animated: true,
+		autoHide: true,
 		description,
+		duration: 3500,
 		icon: getIcon('danger'),
 		message,
+		position: 'top',
 		type: 'danger',
-		...getBaseStyles(),
+		...getStyles('danger'),
 	});
 
 export const flashInfo = (message: string,description?: string) =>
 	showMessage({
+		animated: true,
+		autoHide: true,
 		description,
+		duration: 3000,
 		icon: getIcon('info'),
 		message,
+		position: 'top',
 		type: 'info',
-		...getBaseStyles(),
+		...getStyles('info'),
 	});
 
 export const hideFlash = () => hideMessage();
