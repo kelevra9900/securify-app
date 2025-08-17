@@ -24,14 +24,6 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>Se necesita tu ubicación para continuar</string>
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>Se necesita tu ubicación para continuar</string>
-	<key>NSCameraUsageDescription</key>
-	<string>Se necesita la cámara para tomar una foto del incidente</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Se necesita acceso a tu galería para subir una imagen</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -39,6 +31,24 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Se necesita la cámara para tomar una foto del incidente</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Se necesita tu ubicación para continuar</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Necesitamos tu ubicación para el seguimiento incluso en segundo plano.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Se necesita tu ubicación para continuar</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Se requiere acceso para continuar</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Se necesita acceso a tu galería para subir una imagen</string>
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>location</string>
+		<string>fetch</string>
+		<string>audio</string>
+	</array>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIRequiredDeviceCapabilities</key>

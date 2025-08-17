@@ -11,17 +11,33 @@ import {MotiView} from 'moti';
 
 import {CSafeAreaView,TextLabel} from '@/components/atoms';
 import {useTheme} from '@/context/Theme';
+import {useAppDispatch} from '@/hooks/store';
+import {clearCredentials} from '@/store/reducers/auth';
+import {clearProfile} from '@/store/reducers/user';
+import {useNavigation} from '@react-navigation/native';
+import {Paths} from '@/navigation/paths';
 
-const options = [
-	{icon: User,label: 'Editar perfil',onPress: () => { }},
-	{icon: Shield,label: 'Documentos',onPress: () => { }},
-	{icon: Clock,label: 'Asistencias',onPress: () => { }},
-	{icon: Bell,label: 'Notificaciones',onPress: () => { }},
-	{icon: LogOut,label: 'Cerrar sesión',onPress: () => { }},
-];
+
 
 const ProfileScreen = () => {
 	const {theme} = useTheme();
+	const dispatch = useAppDispatch();
+	const navigation = useNavigation();
+
+	const options = [
+		{icon: User,label: 'Editar perfil',onPress: () => { }},
+		{icon: Shield,label: 'Documentos',onPress: () => { }},
+		{icon: Clock,label: 'Asistencias',onPress: () => { }},
+		{icon: Bell,label: 'Notificaciones',onPress: () => { }},
+		{
+			icon: LogOut,label: 'Cerrar sesión',onPress: () => {
+				// 2) Limpiar Redux
+				dispatch(clearCredentials());
+				dispatch(clearProfile());
+				navigation.navigate(Paths.Login)
+			}
+		},
+	];
 
 	return (
 		<CSafeAreaView edges={["top"]} style={{backgroundColor: theme.background}}>

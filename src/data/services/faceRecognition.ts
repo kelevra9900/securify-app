@@ -5,21 +5,29 @@ import type {BiometricsResponse} from "@/types/biometrics";
 export const recognizeFace = async (
 	payload: RecognizeFacePayload
 ): Promise<BiometricsResponse> => {
-	const formData = new FormData();
+	const form = new FormData();
 
-	formData.append('file',payload.file);
-	formData.append('latitude',payload.latitude.toString());
-	formData.append('longitude',payload.longitude.toString());
+	// 👇 Asegúrate que sea { uri, name, type }
+	form.append('file',{
+		name: payload.file.name ?? `face_${Date.now()}.jpg`,
+		type: payload.file.type ?? 'image/jpeg',
+		uri: payload.file.uri,
+	} as any);
 
-	const response = await instance.post<BiometricsResponse>(
-		'/auth/biometrics',
-		formData,
+	if (typeof payload.latitude === 'number') {
+		form.append('latitude',String(payload.latitude));
+	}
+	if (typeof payload.longitude === 'number') {
+		form.append('longitude',String(payload.longitude));
+	}
+
+	// Usa EXACTAMENTE la ruta que te funciona en Swagger:
+	const {data} = await instance.post<BiometricsResponse>(
+		'mobile/auth/biometrics',
+		form,
 		{
-			headers: {
-				'Content-Type': 'multipart/form-data',
-			},
-		}
+			transformRequest: v => v,
+		},
 	);
-
-	return response.data;
+	return data;
 };
