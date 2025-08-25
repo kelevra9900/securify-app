@@ -1,24 +1,30 @@
+// src/components/atoms/Header.tsx
 import React from 'react';
-import {StyleSheet,Text,TouchableOpacity,View} from 'react-native';
+import {Platform,StyleSheet,Text,TouchableOpacity,View} from 'react-native';
 import {ArrowLeft} from 'lucide-react-native';
 import {useNavigation} from '@react-navigation/native';
 import {useTheme} from '@/context/Theme';
 
 type Props = {
+	rightSlot?: React.ReactNode;
 	title: string;
 };
 
-const Header = ({title}: Props) => {
+const Header = ({rightSlot = undefined,title}: Props) => {
 	const navigation = useNavigation();
 	const {theme} = useTheme();
 
 	return (
-		<View style={[styles.container,{backgroundColor: theme.background}]}>
-			<TouchableOpacity onPress={() => navigation.goBack()}>
+		<View style={[styles.container,{backgroundColor: theme.background,borderBottomColor: theme.border}]}>
+			<TouchableOpacity hitSlop={{bottom: 8,left: 8,right: 8,top: 8}} onPress={() => navigation.goBack()}>
 				<ArrowLeft color={theme.textPrimary} size={24} />
 			</TouchableOpacity>
-			<Text style={[styles.title,{color: theme.textPrimary}]}>{title}</Text>
-			<View style={{width: 24}} /> {/* espacio para balancear */}
+
+			<Text numberOfLines={1} style={[styles.title,{color: theme.textPrimary}]}>
+				{title}
+			</Text>
+
+			<View style={styles.right}>{rightSlot ?? <View style={{width: 24}} />}</View>
 		</View>
 	);
 };
@@ -28,12 +34,20 @@ export default Header;
 const styles = StyleSheet.create({
 	container: {
 		alignItems: 'center',
+		borderBottomWidth: StyleSheet.hairlineWidth,
 		flexDirection: 'row',
-		justifyContent: 'space-between',
-		padding: 16,
+		paddingHorizontal: 16,
+		paddingVertical: 12,
+		// sombra sutil (Android/iOS)
+		...(Platform.OS === 'android'
+			? {elevation: 2}
+			: {shadowColor: '#000',shadowOffset: {height: 4,width: 0},shadowOpacity: 0.08,shadowRadius: 8}),
 	},
+	right: {alignItems: 'flex-end',minWidth: 24},
 	title: {
+		flex: 1,
 		fontSize: 18,
 		fontWeight: '600',
+		marginLeft: 12,
 	},
 });

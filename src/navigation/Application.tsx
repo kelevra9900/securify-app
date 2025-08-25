@@ -7,10 +7,14 @@ import type {RootStackParamList} from './types';
 import {Paths} from './paths';
 
 import {
+	ActiveRound,
 	ChatDetailScreen,
 	CreateReportScreen,
+	DocumentsScreen,
 	FaceCameraScreen,
+	ListRounds,
 	LoginScreen,
+	PreviewRound,
 	SplashScreen,
 	TasksScreen
 } from '@/screens';
@@ -35,6 +39,10 @@ function ApplicationNavigator() {
 							<Stack.Screen component={TasksScreen} name={Paths.Tasks} options={{headerShown: false}} />
 							<Stack.Screen component={CreateReportScreen} name={Paths.CreateReport} />
 							<Stack.Screen component={ChatDetailScreen} name={Paths.ChatDetail} />
+							<Stack.Screen component={DocumentsScreen} name={Paths.Documents} />
+							<Stack.Screen component={ListRounds} name={Paths.Rounds} />
+							<Stack.Screen component={ActiveRound} name={Paths.ActiveRound} />
+							<Stack.Screen component={PreviewRound} name={Paths.PreviewRound} />
 							<Stack.Screen
 								component={FaceCameraScreen}
 								name={Paths.FaceCamera}

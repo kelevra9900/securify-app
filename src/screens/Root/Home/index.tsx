@@ -1,5 +1,7 @@
 import React from 'react';
 import {ActivityIndicator,ScrollView,StyleSheet,Text,View} from 'react-native';
+import {useNavigation} from '@react-navigation/native';
+import type {NavigationProp} from '@react-navigation/native';
 
 import {CSafeAreaView} from '@/components/atoms';
 
@@ -17,9 +19,12 @@ import {
 
 import {useGetHomeData} from '@/hooks/home';
 import {darkTheme} from '@/assets/theme';
+import {Paths} from '@/navigation/paths';
+import type {RootStackParamList} from '@/navigation/types';
 
 const HomeScreen = () => {
 	const {data,isError,isPending,refetch} = useGetHomeData();
+	const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
 	if (isPending) {
 		return (
@@ -42,20 +47,18 @@ const HomeScreen = () => {
 		<CSafeAreaView edges={['top']} style={{backgroundColor: darkTheme.background}}>
 			<ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
 				<View style={styles.content}>
-
 					<UserStatusCard
 						fallbackAvatar={data.user.image ?? undefined}
 						sector={data.sector}
 						shift={data.shift}
-						socketStatus="connected"
+						socketStatus={'disconnected'}
 						user={data.user}
 					/>
 
 					<UserDocumentsStatusCard
 						documents={data.stats.documents}
 						onPress={() => {
-							// navega a la pantalla de documentos, si la tienes:
-							// navigation.navigate('Documents');
+							navigation.navigate(Paths.Documents);
 						}}
 						progressColor={data.environment.primaryColor}
 					/>

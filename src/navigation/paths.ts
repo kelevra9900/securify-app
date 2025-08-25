@@ -1,10 +1,13 @@
 export const enum Paths {
+	ActiveRound = 'activeRound',
 	Chat = 'chat',
 	ChatDetail = 'chatDetail',
 	CreateReport = 'createReport',
+	Documents = 'documents',
 	FaceCamera = 'faceCamera',
 	Home = 'home',
 	Login = 'login',
+	PreviewRound = 'previewRound',
 	Profile = 'profile',
 	Reports = 'reports',
 	Rounds = 'rounds',

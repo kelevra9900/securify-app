@@ -4,9 +4,11 @@ import axios,{AxiosHeaders} from 'axios';
 import Config from 'react-native-config';
 import {Platform} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import store from '@/store';
 
-const API_BASE_URL = Config.API_URL ?? '';
+import store from '@/store';
+import {API_URL} from '@/utils/constants';
+
+// const API_BASE_URL = Config.API_URL ?? '';
 
 let RNLocalize: any;
 try {RNLocalize = require('react-native-localize');} catch {RNLocalize = null;}
@@ -38,7 +40,7 @@ function isFormData(data: unknown): boolean {
 
 // clave para caché ETag (si la usas)
 function cacheKeyFor(config: any,tz: string,userId?: number | string) {
-	const base = config.baseURL || API_BASE_URL;
+	const base = config.baseURL || API_URL;
 	const url = base ? new URL(config.url,base).toString() : String(config.url);
 	const params = config.params ? JSON.stringify(config.params) : '';
 	const uid = userId ?? 'anon';
@@ -47,11 +49,9 @@ function cacheKeyFor(config: any,tz: string,userId?: number | string) {
 }
 
 export const instance = axios.create({
-	baseURL: API_BASE_URL,
+	baseURL: API_URL,
 	headers: {
 		Accept: 'application/json',
-		// 👇 ¡OJO! No fijes Content-Type aquí; lo decide el interceptor según el body
-		// 'Content-Type': 'application/json',
 	},
 });
 
@@ -87,7 +87,6 @@ instance.interceptors.request.use(
 
 		// —— Content-Type según body ——
 		if (sendingForm) {
-			// Importantísimo: no fijar Content-Type para que Axios agregue boundary
 			headers.delete('Content-Type');
 			headers.delete('content-type');
 		} else {

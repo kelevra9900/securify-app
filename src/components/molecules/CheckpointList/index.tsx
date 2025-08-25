@@ -1,65 +1,48 @@
-// CheckpointList.tsx
-import React,{useState} from 'react';
+import React from 'react';
 import {FlatList,StyleSheet,Text,View} from 'react-native';
-
 import {useTheme} from '@/context/Theme';
 import {CheckpointItem} from '@/components/atoms';
-import {CheckpointLogModal} from '@/components/organisms';
-import type {CheckpointLog} from '@/types/checkpoint';
+// import {CheckpointLogModal} from '@/components/organisms';
+import type {Checkpoint} from '@/types/rounds';
+import type {NavigationProp} from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
+import type {RootStackParamList} from '@/navigation/types';
+import {Paths} from '@/navigation/paths';
 
-const MOCK_CHECKPOINTS: CheckpointLog[] = [
-	{
-		checkpointId: 'CP-001',
-		checkpointName: 'Zona A',
-		guardId: 'GUARD-123',
-		guardName: 'Juan Pérez',
-		id: '1',
-		status: 'pending',
-		timestamp: new Date().toISOString(),
-	},
-	{
-		checkpointId: 'CP-002',
-		checkpointName: 'Zona B',
-		guardId: 'GUARD-123',
-		guardName: 'Juan Pérez',
-		id: '2',
-		status: 'completed',
-		timestamp: new Date().toISOString(),
-	},
-	{
-		checkpointId: 'CP-003',
-		checkpointName: 'Zona C',
-		guardId: 'GUARD-123',
-		guardName: 'Juan Pérez',
-		id: '3',
-		status: 'pending',
-		timestamp: new Date().toISOString(),
-	},
-];
+// ⬇️ NUEVO: acepta items opcionales
+type Props = {
+	items?: Checkpoint[];
+};
 
-const CheckpointList = () => {
+
+const CheckpointList = ({items = []}: Props) => {
 	const {theme} = useTheme();
-	const [selectedLog,setSelectedLog] = useState<CheckpointLog | null>(null);
+	const nav = useNavigation<NavigationProp<RootStackParamList>>();
+	// const [selectedLog,setSelectedLog] = useState<Checkpoint | null>(null);
 
 	return (
 		<View style={[styles.container,{backgroundColor: theme.cardBackground}]}>
 			<Text style={[styles.title,{color: theme.textPrimary}]}>Puntos de control</Text>
 
 			<FlatList
-				data={MOCK_CHECKPOINTS}
+				data={items}
 				ItemSeparatorComponent={() => <View style={{height: 10}} />}
-				keyExtractor={(item) => item.id}
+				keyExtractor={(item) => item.id.toString()}
 				renderItem={({index,item}) => (
 					<CheckpointItem
 						index={index}
-						name={item.checkpointName}
-						onPress={() => setSelectedLog(item)}
-						status={item.status}
+						name={item.location}
+						onPress={() => {
+							nav.navigate(Paths.PreviewRound,{
+								id: item.id
+							})
+						}}
+						status={'pending'}
 					/>
 				)}
 				scrollEnabled={false}
 			/>
-
+			{/* 
 			<CheckpointLogModal
 				data={{
 					checkpointName: selectedLog?.checkpointName || '',
@@ -69,7 +52,7 @@ const CheckpointList = () => {
 				}}
 				onClose={() => setSelectedLog(null)}
 				visible={!!selectedLog}
-			/>
+			/> */}
 		</View>
 	);
 };
@@ -77,13 +60,6 @@ const CheckpointList = () => {
 export default CheckpointList;
 
 const styles = StyleSheet.create({
-	container: {
-		borderRadius: 16,
-		padding: 16,
-	},
-	title: {
-		fontSize: 16,
-		fontWeight: 'bold',
-		marginBottom: 12,
-	},
+	container: {borderRadius: 16,padding: 16},
+	title: {fontSize: 16,fontWeight: 'bold',marginBottom: 12},
 });

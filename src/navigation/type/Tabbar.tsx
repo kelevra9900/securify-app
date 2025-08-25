@@ -1,5 +1,5 @@
 import React,{useEffect} from 'react';
-import {Animated,StyleSheet,TouchableOpacity,View} from 'react-native';
+import {Animated,Platform,StyleSheet,TouchableOpacity,View} from 'react-native';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 
@@ -13,6 +13,10 @@ import {CSafeAreaView,PanicFAB,TextLabel} from '@/components/atoms';
 
 import {useTheme} from '@/context/Theme';
 import {usePanicFAB} from '@/hooks/UI/usePanicFAB';
+import {useSelector} from 'react-redux';
+import type {RootState} from '@/store';
+import {isIgnoringDozeWhitelist,requestIgnoreDozeWhitelist,startTracking,stopTracking} from '@/utils/tracking';
+import {API_URL} from '@/utils/constants';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -98,6 +102,44 @@ const CustomTabBar = ({descriptors,navigation,state}: BottomTabBarProps) => {
 export default function TabNavigation() {
 	const {theme} = useTheme();
 	const {triggerSOS} = usePanicFAB();
+	const token = useSelector((state: RootState) => state.auth.token);
+
+	useEffect(() => {
+		// Guard: if no token (shouldn't happen here), do nothing
+		if (!token) {return;}
+
+		// 🔹 Start native tracking as soon as the tab root is mounted (user is logged in)
+		(async () => {
+			await startTracking({
+				namespace: '/tracker',
+				socketUrl: API_URL,
+				token,
+				// Android params (safe no-ops on iOS):
+				fastestMs: 5000,
+				intervalMs: 10_000,
+				minDistanceMeters: 5,
+				// iOS params (safe no-ops on Android):
+				activityType: 'fitness', // or 'automotive'
+				throttleMs: 1500,
+			});
+
+			// ✅ (Android) Optionally request Doze whitelist once to improve reliability
+			if (Platform.OS === 'android') {
+				try {
+					const whitelisted = await isIgnoringDozeWhitelist();
+					if (!whitelisted) {
+						// This shows the system dialog to exclude the app from battery optimizations
+						requestIgnoreDozeWhitelist();
+					}
+				} catch { }
+			}
+		})();
+
+		// 🔻 Stop tracking when the user leaves this navigator (logout → unmount)
+		return () => {
+			stopTracking();
+		};
+	},[token]);
 
 	return (
 		<CSafeAreaView edges={['bottom']} style={{backgroundColor: theme.background,flex: 1}}>
@@ -111,7 +153,6 @@ export default function TabNavigation() {
 					/>
 				))}
 			</Tab.Navigator>
-
 			<PanicFAB onPress={triggerSOS} />
 		</CSafeAreaView>
 	);

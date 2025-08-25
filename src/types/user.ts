@@ -32,6 +32,10 @@ export interface UserLite {
 	jobPosition: JobPositionLite | null;
 	lastName: string;
 	role: Role | string;
+	shift?: {
+		id: number;
+		name: string;
+	}
 	username: string;
 }
 

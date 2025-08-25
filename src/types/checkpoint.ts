@@ -1,11 +1,9 @@
-export interface CheckpointLog {
+export type CheckpointLog = {
 	checkpointId: string;
 	checkpointName: string;
-	evidences?: string[]; // URLs de imágenes o paths locales
-	guardId: string;
-	guardName: string;
+	guardId?: string;       // <- hazlos opcionales
+	guardName?: string;     // <- hazlos opcionales
 	id: string;
-	note?: string; // observación del guardia
-	status: 'completed' | 'pending' | 'skipped';
-	timestamp: string; // ISO string
-}
+	status: 'completed' | 'pending';
+	timestamp?: string;     // si también puede faltar
+};

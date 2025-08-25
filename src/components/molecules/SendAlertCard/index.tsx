@@ -2,19 +2,23 @@
 import React from 'react';
 import {StyleSheet,Text,TouchableOpacity,View} from 'react-native';
 import {Megaphone} from 'lucide-react-native';
+import type {NavigationProp} from '@react-navigation/native';
 import {useNavigation} from '@react-navigation/native';
 
 import {useTheme} from '@/context/Theme';
-import type {Paths} from '@/navigation/paths';
+import {Paths} from '@/navigation/paths';
+import type {RootStackParamList} from '@/navigation/types';
 
 const SendAlertCard = () => {
 	const {theme} = useTheme();
-	const navigation = useNavigation();
+	const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
 	return (
 		<TouchableOpacity
 			activeOpacity={0.9}
-			onPress={() => { }} // Ajusta a tu tipo
+			onPress={() => {
+				navigation.navigate(Paths.CreateReport)
+			}}
 			style={[styles.card,{backgroundColor: theme.cardBackground}]}
 		>
 			<View style={styles.iconWrapper}>

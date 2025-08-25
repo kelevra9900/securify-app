@@ -155,7 +155,7 @@ const FaceCameraScreen = ({navigation}: Props) => {
 			setIsGettingLocation(false);
 			setIsTakingPhoto(false);
 		}
-	},[cameraRef,device,recognition,navigation]);
+	},[cameraRef,device,rekognition,navigation]);
 
 	if (!hasPermission) {
 		return (

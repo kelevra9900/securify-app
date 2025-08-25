@@ -3,7 +3,7 @@
 import React,{useMemo} from 'react';
 import {FlatList,StyleSheet,Text,View} from 'react-native';
 import {useTheme} from '@/context/Theme';
-import type {ActivityItem,RecentActivityType} from '@/types/home';
+import type {ActivityItem,AlertStatus} from '@/types/home';
 import {DateTime} from 'luxon';
 import {
 	AlertCircleIcon,
@@ -27,20 +27,23 @@ type Props = {
 };
 
 const iconByType = (
-	type: RecentActivityType,
+	type: AlertStatus,
 	colorAlert: string,
 	colorIn: string,
 	colorOut: string,
 	colorChange: string,
 ) => {
 	switch (type) {
-		case 'ALERT_CREATED':
+		case 'CREATED':
 			return <AlertCircleIcon color={colorAlert} size={20} />;
-		case 'CHECK_IN':
+		case 'FALSE_ALARM':
 			return <LogInIcon color={colorIn} size={20} />;
-		case 'CHECK_OUT':
+		case 'REJECTED':
+			return <LogInIcon color={colorIn} size={20} />;
+		case 'SOLVED':
 			return <LogOutIcon color={colorOut} size={20} />;
-		case 'SECTOR_CHANGED':
+		case 'UNDER_REVIEW':
+			return <LogInIcon color={colorIn} size={20} />;
 		default:
 			return <ArrowLeftRightIcon color={colorChange} size={20} />;
 	}
@@ -69,16 +72,15 @@ const RecentActivityCard: React.FC<Props> = ({
 
 		// una descripción corta basada en meta (fallback al title)
 		let description = '';
-		if (item.type === 'SECTOR_CHANGED' && item.meta) {
+		if (item.type === 'SOLVED' && item.meta) {
 			const fromId = (item.meta as any).fromSectorId ?? '—';
 			const toId = (item.meta as any).toSectorId ?? '—';
 			description = `Sector ${fromId} → ${toId}`;
-		} else if (item.type === 'ALERT_CREATED' && item.meta) {
+		} else if (item.type === 'CREATED' && item.meta) {
 			const st = (item.meta as any).status ?? '';
 			const id = (item.meta as any).alertId ? `#${(item.meta as any).alertId}` : '';
 			description = [st,id].filter(Boolean).join(' ');
 		} else {
-			// si tu backend ya manda title/desc separados, aquí podrías mostrar otro campo
 			description = '';
 		}
 

@@ -104,7 +104,7 @@ export interface ActivityItem {
 	} & Record<string,unknown>;
 	timestamp: string;                 // ISO
 	title: string;
-	type: RecentActivityType;
+	type: AlertStatus;
 }
 
 export interface AlertsBlock {

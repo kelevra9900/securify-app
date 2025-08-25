@@ -8,14 +8,9 @@ import {type BiometricsResponse,isBiometricsOk} from '@/types/biometrics';
 import {setCredentials} from '@/store/reducers/auth';
 import type {AxiosError} from 'axios';
 
-export type RNFile = {
-	name: string;       // "face_123.jpg"
-	type: string;       // "image/jpeg"
-	uri: string;        // p.ej. "file:///..." o "ph://..."
-};
 
 export interface RecognizeFacePayload {
-	file: RNFile;
+	file: File;
 	latitude?: number;
 	longitude?: number;
 }
