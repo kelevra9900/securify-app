@@ -2,14 +2,9 @@
   "extends": "@react-native/typescript-config/tsconfig.json",
   "baseUrl": ".",
   "compilerOptions": {
-    "types": [
-      "jest",
-      "node"
-    ],
+    "types": ["jest", "node"],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"]
     },
     "allowImportingTsExtensions": false,
     "module": "esnext",
@@ -26,12 +21,16 @@
     "babel.config.js",
     "index.js",
     "react-native.config.js",
-    "jest.setup.ts"
+    "jest.setup.ts",
+    "**/*.ts",
+    "**/*.tsx"
   ],
   "exclude": [
     "node_modules",
     "_",
     "android",
-    "ios"
+    "ios",
+    "**/node_modules",
+    "**/Pods"
   ]
 }

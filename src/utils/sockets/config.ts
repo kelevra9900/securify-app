@@ -1,4 +1,6 @@
-export const SOCKET_BASE_URL = 'https://9f443bb1a570.ngrok-free.app'
+import {API_URL} from "../constants";
+
+export const SOCKET_BASE_URL = API_URL
 
 export const defaultSocketOptions = (token: string) => ({
 	auth: {token},

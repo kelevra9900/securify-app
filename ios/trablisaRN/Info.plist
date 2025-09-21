@@ -5,7 +5,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>es</string>
 	<key>CFBundleDisplayName</key>
-	<string>trablisaRN</string>
+	<string>SphereAG</string>
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -24,6 +24,8 @@
 	<string>$(CURRENT_PROJECT_VERSION)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NFCReaderUsageDescription</key>
+	<string>Necesitamos leer el tag NFC del checkpoint.</string>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
@@ -45,11 +47,12 @@
 	<string>Se requiere acceso para continuar</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Se necesita acceso a tu galería para subir una imagen</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 		<string>fetch</string>
-		<string>audio</string>
 		<string>nearby-interaction</string>
 	</array>
 	<key>UILaunchStoryboardName</key>
@@ -66,7 +69,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>NFCReaderUsageDescription</key>
-	<string>Necesitamos NFC para leer etiquetas cercanas.</string>
 </dict>
 </plist>

@@ -1,71 +1,100 @@
-import React from 'react';
-import {ScrollView,StyleSheet,View} from 'react-native';
-import {CSafeAreaView,PrimaryButton} from '@/components/atoms';
-import {ReportsListCard,ReportsSummaryCard} from '@/components/molecules';
-import {useTheme} from '@/context/Theme';
-import type {RootScreenProps} from '@/navigation/types';
-import {Paths} from '@/navigation/paths';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+// src/screens/ReportsScreen.tsx
+import type { RootScreenProps } from '@/navigation/types';
 
+import React, { useMemo } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
-type Props = {
-	navigation: RootScreenProps<Paths.Reports>['navigation'];
-};
+import { useSummaryReports } from '@/hooks/alerts/useSummaryReports';
+import { Paths } from '@/navigation/paths';
 
-const ReportsScreen = ({navigation}: Props) => {
-	const {theme} = useTheme();
+import { CSafeAreaView, PrimaryButton, TextLabel } from '@/components/atoms';
+import { ReportsListCard, ReportsSummaryCard } from '@/components/molecules';
+import {
+  ReportsListSkeleton,
+  ReportsSummarySkeleton,
+} from '@/components/molecules/ReportSkeleton';
 
-	// 🔁 Simulación de datos de resumen y reportes
-	const summary = {
-		open: 5,
-		rejected: 2,
-		resolved: 12,
-		total: 19,
-	};
+import { useTheme } from '@/context/Theme';
+import { mapCountersToCard, mapRecentToCardItems } from '@/utils/alerts';
 
-	const recentReports = [
-		{date: '21 junio, 12:30 PM',id: 'r1',status: 'pending',title: 'Falla en cámara de seguridad'},
-		{date: '20 junio, 10:15 AM',id: 'r2',status: 'resolved',title: 'Puerta trasera forzada'},
-		{date: '19 junio, 9:00 PM',id: 'r3',status: 'review',title: 'Persona sospechosa'},
-	];
+type Props = { navigation: RootScreenProps<Paths.Reports>['navigation'] };
 
-	const handlePressReport = (id: string) => {
-		// Aquí puedes navegar a la pantalla de detalle del reporte
-		console.log('Ver detalle del reporte:',id);
+const ReportsScreen = ({ navigation }: Props) => {
+  const { theme } = useTheme();
+  const { data, error, isError, isPending } = useSummaryReports();
 
-	};
+  const summary = useMemo(
+    () =>
+      mapCountersToCard(
+        data?.counters ?? { created: 0, rejected: 0, resolved: 0 },
+      ),
+    [data],
+  );
+  const recentReports = useMemo(
+    () => mapRecentToCardItems(data?.recent ?? [], 'es-MX'),
+    [data],
+  );
 
-	const handleCreateReport = () => {
-		navigation.navigate(Paths.CreateReport);
-	};
+  const handlePressReport = (id: string) => {
+    navigation.navigate(Paths.AlertDetail, { id: Number(id) });
+  };
 
-	return (
-		<CSafeAreaView edges={['top']} style={{backgroundColor: theme.background}}>
-			<ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-				<View style={styles.content}>
-					<ReportsSummaryCard
-						open={summary.open}
-						rejected={summary.rejected}
-						resolved={summary.resolved}
-						total={summary.total}
-					/>
+  const handleCreateReport = () => {
+    navigation.navigate(Paths.CreateReport);
+  };
 
-					<ReportsListCard onPressReport={handlePressReport} reports={recentReports as any} />
-					<PrimaryButton label="Crear reporte" onPress={handleCreateReport} />
+  return (
+    <CSafeAreaView
+      edges={['top']}
+      style={{ backgroundColor: theme.background }}
+    >
+      <ScrollView
+        contentContainerStyle={styles.container}
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.content}>
+          {isPending ? (
+            <>
+              <ReportsSummarySkeleton cardBg={theme.cardBackground} />
+              <ReportsListSkeleton cardBg={theme.cardBackground} count={3} />
+            </>
+          ) : isError ? (
+            <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+              <TextLabel color={theme.textPrimary} type="R14">
+                {(error as Error)?.message || 'No se pudo cargar el resumen'}
+              </TextLabel>
+            </View>
+          ) : (
+            <>
+              <ReportsSummaryCard
+                open={summary.open}
+                rejected={summary.rejected}
+                resolved={summary.resolved}
+                total={summary.total}
+              />
+              <ReportsListCard
+                onPressReport={handlePressReport}
+                reports={recentReports as any}
+              />
+            </>
+          )}
 
-				</View>
-			</ScrollView>
-		</CSafeAreaView>
-	);
+          <PrimaryButton label="Crear reporte" onPress={handleCreateReport} />
+        </View>
+      </ScrollView>
+    </CSafeAreaView>
+  );
 };
 
 export default ReportsScreen;
 
 const styles = StyleSheet.create({
-	container: {
-		paddingBottom: 40,
-		paddingHorizontal: 20,
-	},
-	content: {
-		gap: 16,
-	},
+  container: {
+    paddingBottom: 40,
+    paddingHorizontal: 20,
+  },
+  content: {
+    gap: 16,
+  },
 });

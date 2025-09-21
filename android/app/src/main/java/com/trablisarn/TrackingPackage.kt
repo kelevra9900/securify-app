@@ -7,7 +7,11 @@ import com.facebook.react.uimanager.ViewManager
 
 class TrackingPackage : ReactPackage {
   override fun createNativeModules(rc: ReactApplicationContext): List<NativeModule> =
-    listOf(TrackingModule(rc))
+    listOf(
+      TrackingModule(rc), 
+      GeolocationModule(rc), 
+      NfcModule(rc)
+    )
 
   override fun createViewManagers(rc: ReactApplicationContext): List<ViewManager<*, *>> =
     emptyList()

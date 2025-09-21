@@ -6,12 +6,21 @@ export const recognizeFace = async (
 	payload: RecognizeFacePayload
 ): Promise<BiometricsResponse> => {
 	const form = new FormData();
+	const rawUri = (payload.file)?.uri as string | undefined;
+	const normalizedUri = rawUri
+		? rawUri.startsWith('file://') || rawUri.startsWith('content://')
+			? rawUri
+			: `file://${rawUri}`
+		: undefined;
 
-	// 👇 Asegúrate que sea { uri, name, type }
+	if (!normalizedUri) {
+		throw new Error('Invalid file uri for face recognition');
+	}
+
 	form.append('file',{
-		name: payload.file.name ?? `face_${Date.now()}.jpg`,
-		type: payload.file.type ?? 'image/jpeg',
-		uri: payload.file.uri,
+		name: (payload.file as any)?.name ?? `face_${Date.now()}.jpg`,
+		type: (payload.file as any)?.type ?? 'image/jpeg',
+		uri: normalizedUri as any,
 	} as any);
 
 	if (typeof payload.latitude === 'number') {

@@ -15,6 +15,10 @@
 		837B37C42E5AAB6C00042630 /* TrackingModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837B37C32E5AAB6600042630 /* TrackingModule.swift */; };
 		837B37C62E5AAB7F00042630 /* TrackingManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 837B37C52E5AAB7E00042630 /* TrackingManager.swift */; };
 		837B37CA2E5AAD3800042630 /* TrackingModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 837B37C92E5AAD3800042630 /* TrackingModule.m */; };
+		83848C4A2E5D77D70035DEE7 /* GeolocationModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83848C492E5D77D70035DEE7 /* GeolocationModule.swift */; };
+		83848C4C2E5D78200035DEE7 /* GeolocationModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 83848C4B2E5D78200035DEE7 /* GeolocationModule.m */; };
+		83F385222E5D82B20090B780 /* NfcModule.swift in Sources */ = {isa = PBXBuildFile; fileRef = 83F385212E5D82B20090B780 /* NfcModule.swift */; };
+		83F385242E5D82DC0090B780 /* NfcModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 83F385232E5D82DC0090B780 /* NfcModule.m */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -30,7 +34,11 @@
 		837B37C32E5AAB6600042630 /* TrackingModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingModule.swift; sourceTree = "<group>"; };
 		837B37C52E5AAB7E00042630 /* TrackingManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrackingManager.swift; sourceTree = "<group>"; };
 		837B37C92E5AAD3800042630 /* TrackingModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = TrackingModule.m; sourceTree = "<group>"; };
+		83848C492E5D77D70035DEE7 /* GeolocationModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GeolocationModule.swift; sourceTree = "<group>"; };
+		83848C4B2E5D78200035DEE7 /* GeolocationModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GeolocationModule.m; sourceTree = "<group>"; };
 		83DB5BAC2E14FB4700ECFB97 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		83F385212E5D82B20090B780 /* NfcModule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NfcModule.swift; sourceTree = "<group>"; };
+		83F385232E5D82DC0090B780 /* NfcModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = NfcModule.m; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -53,10 +61,14 @@
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				837B37C32E5AAB6600042630 /* TrackingModule.swift */,
 				837B37C52E5AAB7E00042630 /* TrackingManager.swift */,
+				83F385212E5D82B20090B780 /* NfcModule.swift */,
+				83F385232E5D82DC0090B780 /* NfcModule.m */,
 				837B37C92E5AAD3800042630 /* TrackingModule.m */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */,
+				83848C492E5D77D70035DEE7 /* GeolocationModule.swift */,
+				83848C4B2E5D78200035DEE7 /* GeolocationModule.m */,
 			);
 			name = trablisaRN;
 			sourceTree = "<group>";
@@ -123,6 +135,7 @@
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */,
 				E235C05ADACE081382539298 /* [CP] Copy Pods Resources */,
+				3B1125B251254A66A366BC2F /* Upload Debug Symbols to Sentry */,
 			);
 			buildRules = (
 			);
@@ -192,7 +205,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
+			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT \\\"/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode.sh $REACT_NATIVE_XCODE\\\"\"\n";
 		};
 		00EEFC60759A1932668264C0 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -210,6 +223,20 @@
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-trablisaRN/Pods-trablisaRN-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
+		};
+		3B1125B251254A66A366BC2F /* Upload Debug Symbols to Sentry */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Upload Debug Symbols to Sentry";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "/bin/sh ../node_modules/@sentry/react-native/scripts/sentry-xcode-debug-files.sh";
 		};
 		C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -257,10 +284,14 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				83848C4C2E5D78200035DEE7 /* GeolocationModule.m in Sources */,
 				837B37CA2E5AAD3800042630 /* TrackingModule.m in Sources */,
+				83F385222E5D82B20090B780 /* NfcModule.swift in Sources */,
+				83F385242E5D82DC0090B780 /* NfcModule.m in Sources */,
 				837B37C62E5AAB7F00042630 /* TrackingManager.swift in Sources */,
 				837B37C42E5AAB6C00042630 /* TrackingModule.swift in Sources */,
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				83848C4A2E5D77D70035DEE7 /* GeolocationModule.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -392,7 +423,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "$(inherited) DEBUG";
@@ -461,7 +495,10 @@
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 					"-DFOLLY_HAVE_CLOCK_GETTIME=1",
 				);
-				OTHER_LDFLAGS = "$(inherited)  ";
+				OTHER_LDFLAGS = (
+					"$(inherited)",
+					" ",
+				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
