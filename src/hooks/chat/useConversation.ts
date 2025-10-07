@@ -1,24 +1,27 @@
-// src/hooks/chat/useConversation.ts
-import type { InfiniteData } from '@tanstack/react-query';
-import type { MessagesPage, WsMessage } from '@/data/services/chat';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import type {InfiniteData} from '@tanstack/react-query';
+import type {MessagesPage,WsMessage} from '@/data/services/chat';
 
-import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo } from 'react';
+import {useInfiniteQuery,useQueryClient} from '@tanstack/react-query';
+import {useCallback,useEffect,useMemo} from 'react';
 
-import { getConversationMessages } from '@/data/services/chat';
+import {getConversationMessages} from '@/data/services/chat';
+import {useGetCurrentUser} from '@/hooks/user/current_user';
 
-import { useChatSocket } from './useChatSocket';
+import {type ServerToClientEvents,useChatSocket} from './useChatSocket';
 
-const QUERY_KEY = (id: number) => ['chat', 'conversation', id] as const;
+export const QUERY_KEY = (id: number) => ['chat','conversation',id] as const;
+const mkClientId = () => `c${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
 export function useConversation(conversationId: number) {
-  const { connected, socket } = useChatSocket();
+  const {connected,emit,on} = useChatSocket();
   const qc = useQueryClient();
+  const {data: me} = useGetCurrentUser();
 
   const q = useInfiniteQuery<
     MessagesPage,
     Error,
-    InfiniteData<MessagesPage, number | undefined>,
+    InfiniteData<MessagesPage,number | undefined>,
     ReturnType<typeof QUERY_KEY>,
     number | undefined
   >({
@@ -26,15 +29,15 @@ export function useConversation(conversationId: number) {
     // ⬇️ requerido en v5 (usa undefined para primera página)
     getNextPageParam: (last) => last.nextCursor ?? undefined,
     initialPageParam: undefined,
-    queryFn: ({ pageParam }) =>
-      getConversationMessages(conversationId, { cursor: pageParam, limit: 30 }),
+    queryFn: ({pageParam}) =>
+      getConversationMessages(conversationId,{cursor: pageParam,limit: 30}),
     refetchOnReconnect: true,
     refetchOnWindowFocus: false,
     staleTime: 30_000,
   });
 
   const messages = useMemo<WsMessage[]>(
-    () => q.data?.pages.flatMap((p) => p.items) ?? [],
+    () => q.data?.pages.flatMap((p) => p.items).reverse() ?? [],
     [q.data],
   );
 
@@ -44,16 +47,13 @@ export function useConversation(conversationId: number) {
       return;
     }
 
-    socket?.emit('join_conversation', { conversationId });
+    emit('join_conversation',{conversationId});
 
-    // OJO: usa el nombre de evento que emite tu servidor.
-    // Si tu gateway emite 'receive_message', cambia aquí:
-    const onMessage = (msg: WsMessage) => {
+    const onNewMessage: ServerToClientEvents['message:new'] = (msg) => {
       if (msg.conversationId !== conversationId) {
         return;
       }
-
-      qc.setQueryData<InfiniteData<MessagesPage, number | undefined>>(
+      qc.setQueryData<InfiniteData<MessagesPage>>(
         QUERY_KEY(conversationId),
         (prev) => {
           if (!prev) {
@@ -63,35 +63,84 @@ export function useConversation(conversationId: number) {
           if (!first) {
             return prev;
           }
+          const optimisticIndex: any = msg.clientId ? first.items.findIndex((m) => m.clientId === msg.clientId) : -1;
 
-          // evita duplicados
-          if (first.items.some((m) => m.id === msg.id)) {
+          if (optimisticIndex !== -1) {
+            const newItems: any = [...first.items];
+            newItems[optimisticIndex] = msg;
+            const updatedFirst: MessagesPage = {...first,items: newItems};
+            return {...prev,pages: [updatedFirst,...prev.pages.slice(1)]};
+          }
+          if (first.items.some((m) => m.id === msg.id && m.id > 0)) {
             return prev;
           }
 
           const updatedFirst: MessagesPage = {
             ...first,
-            items: [msg, ...first.items],
+            items: [msg as any,...first.items],
           };
-          return { ...prev, pages: [updatedFirst, ...prev.pages.slice(1)] };
+          return {...prev,pages: [updatedFirst,...prev.pages.slice(1)]};
         },
       );
     };
 
-    socket?.on('message', onMessage); // o 'receive_message' según backend
+    const onMessageAck: ServerToClientEvents['message:ack'] = (ack) => {
+      if (ack.conversationId !== conversationId || !ack.clientId) {return;}
+
+      qc.setQueryData<InfiniteData<MessagesPage>>(
+        QUERY_KEY(conversationId),
+        (prev: any) => {
+          if (!prev) {return prev;}
+
+          const newPages = prev.pages.map((page: any) => ({
+            ...page,
+            items: page.items.map((item: any) =>
+              item.clientId === ack.clientId
+                ? {...item,clientId: null,id: ack.messageId}
+                : item,
+            ),
+          }));
+
+          return {...prev,pages: newPages};
+        },
+      );
+    };
+
+    const offNew = on('message:new',onNewMessage);
+    const offAck = on('message:ack',onMessageAck);
 
     return () => {
-      socket?.off('message', onMessage); // o 'receive_message'
+      offNew();
+      offAck();
     };
-  }, [connected, conversationId, qc, socket]);
+  },[connected,conversationId,qc,emit,on]);
 
-  const send = (text: string) => {
+  const send = useCallback((text: string) => {
     const content = text.trim();
-    if (!content) {
+    if (!content || !me?.user.id) {
       return;
     }
-    socket?.emit('send_message', { conversationId, message: content });
-  };
+    const clientId = mkClientId();
+
+    const optimisticMessage: WsMessage = {
+      clientId,
+      content,
+      conversationId,
+      createdAt: new Date().toISOString(),
+      fromUserId: me.user.id,
+      id: -Date.now(), // ID temporal negativo
+      toUserId: null,
+    };
+
+    qc.setQueryData<InfiniteData<MessagesPage>>(QUERY_KEY(conversationId),(prev) => {
+      if (!prev) {return prev;}
+      const first = prev.pages[0];
+      const updatedFirst: MessagesPage = {...first,items: [optimisticMessage,...first.items]};
+      return {...prev,pages: [updatedFirst,...prev.pages.slice(1)]};
+    });
+
+    emit('send_message',{clientId,conversationId,message: content});
+  },[conversationId,emit,qc,me?.user.id]);
 
   return {
     ...q,

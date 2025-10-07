@@ -1,15 +1,15 @@
 // src/screens/CreateReportScreen.tsx
-import type { Asset } from 'react-native-image-picker';
-import type { RootState } from '@/store';
+import type {Asset} from 'react-native-image-picker';
+import type {RootState} from '@/store';
 
-import { useNavigation } from '@react-navigation/native';
-import { ArrowLeft } from 'lucide-react-native';
-import React, { useState } from 'react';
-import { Controller, useForm } from 'react-hook-form';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import { useSelector } from 'react-redux';
+import {useNavigation} from '@react-navigation/native';
+import {ArrowLeft} from 'lucide-react-native';
+import React,{useState} from 'react';
+import {Controller,useForm} from 'react-hook-form';
+import {ScrollView,StyleSheet,View} from 'react-native';
+import {useSelector} from 'react-redux';
 
-import { useCreateAlert } from '@/hooks/alerts/useCreateAlert';
+import {useCreateAlert} from '@/hooks/alerts/useCreateAlert';
 
 import {
   CGInput,
@@ -18,11 +18,11 @@ import {
   TextArea,
   TextLabel,
 } from '@/components/atoms';
-import { ImagePickerInput } from '@/components/molecules';
+import {ImagePickerInput} from '@/components/molecules';
 
-import { useTheme } from '@/context/Theme';
-import { tryGetCurrentLatLng } from '@/utils/location';
-import { showToast } from '@/utils/toast';
+import {useTheme} from '@/context/Theme';
+import {tryGetCurrentLatLng} from '@/utils/location';
+import {showToast} from '@/utils/toast';
 
 type FormValues = {
   description: string;
@@ -30,11 +30,11 @@ type FormValues = {
 };
 
 const CreateReportScreen = () => {
-  const { control, handleSubmit, reset } = useForm<FormValues>();
-  const [image, setImage] = useState<Asset | null>(null);
-  const { theme } = useTheme();
+  const {control,handleSubmit,reset} = useForm<FormValues>();
+  const [image,setImage] = useState<Asset | null>(null);
+  const {theme} = useTheme();
   const navigation = useNavigation();
-  const { isPending, mutateAsync } = useCreateAlert();
+  const {isPending,mutateAsync} = useCreateAlert();
 
   const envId = useSelector((s: RootState) => s.profile.environment?.id) as
     | number
@@ -42,43 +42,40 @@ const CreateReportScreen = () => {
 
   const onSubmit = async (data: FormValues) => {
     const loc = await tryGetCurrentLatLng().catch(() => null);
-
-    try {
-      await mutateAsync(
-        {
-          description: data.description,
-          environmentId: envId,
-          image,
-          latitude: loc?.latitude,
-          longitude: loc?.longitude,
-          title: data.title,
+    await mutateAsync(
+      {
+        description: data.description,
+        environmentId: envId,
+        image,
+        latitude: loc?.latitude,
+        longitude: loc?.longitude,
+        title: data.title,
+      },
+      {
+        onError: (error) => {
+          showToast({
+            title: 'Error al crear la alerta',
+            variant: 'error',
+          });
         },
-        {
-          onError: (error) => {
-            showToast({
-              title: 'Error al crear la alerta',
-              variant: 'error',
-            });
-          },
-          onSuccess: (data) => {
-            showToast({
-              description: 'Alerta creada correctamente',
-              title: 'Listo',
-              variant: 'success',
-            });
-            reset();
-            setImage(null);
-            navigation.goBack();
-          },
+        onSuccess: (data) => {
+          showToast({
+            description: 'Alerta creada correctamente',
+            title: 'Listo',
+            variant: 'success',
+          });
+          reset();
+          setImage(null);
+          navigation.goBack();
         },
-      );
-    } catch {}
+      },
+    );
   };
 
   return (
     <CSafeAreaView
       edges={['top']}
-      style={{ backgroundColor: theme.background }}
+      style={{backgroundColor: theme.background}}
     >
       <ScrollView contentContainerStyle={styles.container}>
         {/* Header */}
@@ -116,7 +113,7 @@ const CreateReportScreen = () => {
           <Controller
             control={control}
             name="title"
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
+            render={({field: {onChange,value},fieldState: {error}}) => (
               <CGInput
                 error={error?.message}
                 label="Título del reporte"
@@ -125,13 +122,13 @@ const CreateReportScreen = () => {
                 value={value}
               />
             )}
-            rules={{ required: 'El título es obligatorio' }}
+            rules={{required: 'El título es obligatorio'}}
           />
 
           <Controller
             control={control}
             name="description"
-            render={({ field: { onChange, value }, fieldState: { error } }) => (
+            render={({field: {onChange,value},fieldState: {error}}) => (
               <TextArea
                 error={error?.message}
                 label="Descripción"
@@ -141,7 +138,7 @@ const CreateReportScreen = () => {
                 value={value}
               />
             )}
-            rules={{ required: 'La descripción es obligatoria' }}
+            rules={{required: 'La descripción es obligatoria'}}
           />
 
           <PrimaryButton
@@ -163,16 +160,16 @@ const styles = StyleSheet.create({
     elevation: 2,
     gap: 16,
     padding: 20,
-    shadowOffset: { height: 2, width: 0 },
+    shadowOffset: {height: 2,width: 0},
     shadowOpacity: 0.08,
     shadowRadius: 4,
   },
-  container: { padding: 16 },
+  container: {padding: 16},
   header: {
     alignItems: 'center',
     flexDirection: 'row',
     gap: 8,
     marginBottom: 16,
   },
-  headerText: { fontWeight: '600' },
+  headerText: {fontWeight: '600'},
 });

@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React,{useCallback,useEffect,useMemo,useRef,useState} from 'react';
+import React,{useCallback,useMemo,useState} from 'react';
 import {
 	ActivityIndicator,
 	FlatList,
@@ -17,64 +17,23 @@ import {CSafeAreaView,TextLabel} from '@/components/atoms';
 import {useTheme} from '@/context/Theme';
 import {useNavigation,useRoute} from '@react-navigation/native';
 import {moderateScale} from '@/constants';
-import {useChatSocket} from '@/hooks/chat/useChatSocket';
-import {useConversationMessages} from '@/hooks/chat/useConversationMessages';
-import type {WsMessage} from '@/data/services/chat';
-import {useSelector} from 'react-redux';
-import type {RootState} from '@/store';
+import {useConversation} from '@/hooks/chat/useConversation';
 import type {Row} from '@/utils/chat';
 import {buildRows} from '@/utils/chat';
-import {useQueryClient} from '@tanstack/react-query';
 import {useGetCurrentUser} from '@/hooks/user/current_user';
 
 type RouteParams = {conversationId: number; title?: string};
-
-type ApiMsg = {
-	clientId: string;
-	content: string;
-	conversationId: number;
-	createdAt?: string; // viene en ISO; lo marcamos optional por seguridad
-	fromUser?: {
-		firstName?: null | string;
-		id: number;
-		image?: null | string;
-		lastName?: null | string;
-	};
-	fromUserId: number;
-	id: number;
-	toUserId: null | number;
-};
-
-function mapApiToWs(m: ApiMsg): WsMessage {
-	return {
-		clientId: m.clientId,
-		content: m.content,
-		conversationId: m.conversationId,
-		createdAt: m.createdAt ?? new Date().toISOString(), // asegura string
-		fromUser: m.fromUser
-			? {
-				firstName: m.fromUser.firstName ?? undefined,
-				id: m.fromUser.id,
-				image: m.fromUser.image ?? null,
-				lastName: m.fromUser.lastName ?? undefined,
-			}
-			: undefined,
-		fromUserId: m.fromUserId,
-		id: m.id,
-		toUserId: m.toUserId ?? null,
-	};
-}
 
 export default function ChatDetailScreen() {
 	const {theme} = useTheme();
 	const route = useRoute() as unknown as {params: RouteParams};
 	const navigation = useNavigation();
-	const {connected,emit,on} = useChatSocket();
-
 	const {data: profile} = useGetCurrentUser();
 
 	const conversationId = route?.params?.conversationId;
 	const displayName = route?.params?.title ?? 'Chat';
+
+
 
 	// Altura real del input para reservar espacio (con lista invertida, usamos paddingTop)
 	const insets = useSafeAreaInsets();
@@ -82,144 +41,28 @@ export default function ChatDetailScreen() {
 	const WRAPPER_VPAD = 12;
 	const INPUT_TOTAL = INPUT_MIN_H + WRAPPER_VPAD + insets.bottom + 6;
 
-	// Historial paginado desde API
+	// Hook centralizado para la lógica de la conversación
 	const {
-		data,
 		fetchNextPage,
 		hasNextPage,
 		isFetchingNextPage,
 		isLoading,
-	} = useConversationMessages(conversationId);
-
-	// Normaliza historial en DESC (nuevo -> viejo). No lo inviertas.
-	const historyDESC: WsMessage[] = useMemo(
-		() => (data?.pages.flatMap(p => (p.items as ApiMsg[]) ?? []) ?? []).map(mapApiToWs),
-		[data],
-	);
-
-	// Live messages (nuevos). Los ponemos AL FRENTE para DESC.
-	const [live,setLive] = useState<WsMessage[]>([]);
-	const liveIds = useRef<Set<number>>(new Set());
-
-	// Para dedupe rápido contra historial
-	const historyIds = useMemo(() => new Set(historyDESC.map(m => m.id)),[historyDESC]);
-
-	// Dataset final en DESC: primero live (más recientes), luego historial.
-	const datasetDESC = useMemo<WsMessage[]>(
-		() => [...live,...historyDESC],
-		[live,historyDESC],
-	);
+		messages: datasetDESC, // ya viene en orden DESC (nuevo -> viejo)
+		send,
+	} = useConversation(conversationId);
 
 	// Construye filas con separadores de fecha (indicamos inverted:true)
 	const rows: Row[] = useMemo(
-		() => buildRows(datasetDESC,{inverted: true}),
+		() => buildRows(datasetDESC,{inverted: false}),
 		[datasetDESC],
 	);
 
-
-
-	const qc = useQueryClient();
-
-	const bumpConversations = useCallback((m: WsMessage) => {
-		qc.setQueryData(['chat','conversations'],(prev: any) => {
-			if (!prev) {return prev;}
-
-			// soporta tanto array plano como {data: [...]}
-			const list: any[] = Array.isArray(prev) ? prev : (prev.data ?? []);
-			const idx = list.findIndex(c => c.conversationId === m.conversationId);
-
-			const latest = {
-				content: m.content,
-				createdAt: m.createdAt,
-				fromUser: m.fromUser
-					? {firstName: m.fromUser.firstName,id: m.fromUser.id,image: m.fromUser.image ?? null,lastName: m.fromUser.lastName}
-					: undefined,
-				id: m.id,
-			};
-
-			let next: any[];
-			if (idx === -1) {
-				// si por alguna razón no está, lo agregamos al tope
-				next = [{conversationId: m.conversationId,isGroup: false,lastMessage: latest,otherParticipant: null},...list];
-			} else {
-				const updated = {...list[idx],lastMessage: latest};
-				next = [updated,...list.slice(0,idx),...list.slice(idx + 1)];
-			}
-
-			return Array.isArray(prev) ? next : {...prev,data: next};
-		});
-	},[qc]);
-
-	// Unirse a la sala una vez
-	useEffect(() => {
-		if (!connected || !conversationId) {return;}
-		emit('join_conversation',{conversationId},() => { });
-	},[connected,conversationId,emit]);
-
-	// Suscripción a mensajes en vivo
-	// === listener de mensajes ===
-	useEffect(() => {
-		setLive([]); liveIds.current.clear();
-
-		const off = on('message',(msg) => {
-			if (msg.conversationId !== conversationId) {return;}
-
-			const fixed = mapApiToWs(msg as any);
-			fixed.clientId = (msg as any).clientId;
-
-			if (fixed.clientId) {
-				setLive(prev => {
-					const idx = prev.findIndex(m => m.clientId === fixed.clientId);
-					if (idx !== -1) {
-						const copy = [...prev];
-						copy[idx] = fixed;            // reemplaza optimista
-						return copy;
-					}
-					return [fixed,...prev];
-				});
-			} else {
-				setLive(prev => [fixed,...prev]);
-			}
-
-			// 👇 mueve la conversación al tope y actualiza lastMessage
-			bumpConversations(fixed);
-		});
-
-		return off;
-	},[conversationId,on,historyIds,bumpConversations]);
-
-	// Envío optimista
 	const [text,setText] = useState('');
 
-
 	const handleSend = useCallback(() => {
-		const raw = text.trim();
-		if (!raw || !conversationId) {return;}
-		const mkClientId = () => `c${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
-		const clientId = mkClientId();
-
-		const optimistic: WsMessage = {
-			clientId,
-			content: raw,
-			conversationId,
-			createdAt: new Date().toISOString(),
-			fromUserId: profile?.user.id ?? 0,
-			id: -Date.now(), // id temporal
-			toUserId: null,
-		};
-
-		// DESC + inverted: al frente
-		setLive(prev => [optimistic,...prev]);
+		send(text);
 		setText('');
-
-		emit('send_message',{clientId,conversationId,message: raw},() => { });
-		// opcional: refetch suave para asegurar consistencia con backend
-		setTimeout(() => {
-			qc.invalidateQueries({queryKey: ['chat','conversations']});
-		},300);
-
-	},[text,conversationId,emit,qc,profile?.user.id]);
-
+	},[send,text]);
 
 	// Loader inicial
 	if (isLoading) {
@@ -335,8 +178,7 @@ export default function ChatDetailScreen() {
 							returnKeyType="send"
 							style={[styles.input,{color: theme.textPrimary}]}
 							value={text}
-						/>
-						<TouchableOpacity disabled={!text.trim() || !connected} onPress={handleSend}>
+						/>						<TouchableOpacity disabled={!text.trim()} onPress={handleSend}>
 							<SendHorizonal color={theme.textPrimary} size={22} />
 						</TouchableOpacity>
 					</View>

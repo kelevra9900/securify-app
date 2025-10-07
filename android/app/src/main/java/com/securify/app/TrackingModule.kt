@@ -1,5 +1,5 @@
 // TrackingModule.kt
-package com.trablisarn
+package com.securify.app
 
 import android.Manifest
 import android.content.Intent
@@ -7,12 +7,17 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import com.facebook.react.bridge.*
 
 class TrackingModule(private val rc: ReactApplicationContext) :
   ReactContextBaseJavaModule(rc) {
+
+  companion object {
+    private const val TAG = "TrackingModule"
+  }
 
   override fun getName() = "TrackingModule"
 
@@ -28,6 +33,7 @@ class TrackingModule(private val rc: ReactApplicationContext) :
   // ---------- API ----------
   @ReactMethod
   fun saveAuth(token: String, socketUrl: String?, event: String?, namespace: String?) {
+    Log.d(TAG, "saveAuth(token=${token.take(6)}…, url=$socketUrl, event=$event, namespace=$namespace)")
     val sp = rc.getSharedPreferences("auth", 0).edit()
     sp.putString("token", token)
     socketUrl?.let { sp.putString("socketUrl", it) }
@@ -38,23 +44,56 @@ class TrackingModule(private val rc: ReactApplicationContext) :
 
   @ReactMethod
   fun start(options: ReadableMap?) {
+    Log.i(TAG, "start() called with options=${options?.toHashMap()}")
     val i = Intent(rc, TrackingService::class.java).apply {
       action = TrackingService.ACTION_START
-      putExtra(TrackingService.EXTRA_INTERVAL_MS, options?.getDouble("intervalMs")?.toLong() ?: 10_000L)
-      putExtra(TrackingService.EXTRA_FASTEST_MS, options?.getDouble("fastestMs")?.toLong() ?: 5_000L)
-      putExtra(TrackingService.EXTRA_MIN_DISTANCE, options?.getDouble("minDistanceMeters")?.toFloat() ?: 5f)
-      putExtra(TrackingService.EXTRA_THROTTLE_MS, options?.getDouble("throttleMs")?.toLong() ?: 1500L)
 
-      options?.getString("socketUrl")?.let { putExtra(TrackingService.EXTRA_SOCKET_URL, it) }
-      options?.getString("token")?.let { putExtra(TrackingService.EXTRA_TOKEN, it) }
-      options?.getString("event")?.let { putExtra(TrackingService.EXTRA_EVENT, it) }
-      options?.getString("namespace")?.let { putExtra(TrackingService.EXTRA_NAMESPACE, it) }
+      val interval = if (options?.hasKey("intervalMs") == true) {
+        options.getDouble("intervalMs").toLong()
+      } else 10_000L
+      val fastest = if (options?.hasKey("fastestMs") == true) {
+        options.getDouble("fastestMs").toLong()
+      } else 5_000L
+      val minDistance = if (options?.hasKey("minDistanceMeters") == true) {
+        options.getDouble("minDistanceMeters").toFloat()
+      } else 5f
+      val throttle = if (options?.hasKey("throttleMs") == true) {
+        options.getDouble("throttleMs").toLong()
+      } else 1500L
+
+      putExtra(TrackingService.EXTRA_INTERVAL_MS, interval)
+      putExtra(TrackingService.EXTRA_FASTEST_MS, fastest)
+      putExtra(TrackingService.EXTRA_MIN_DISTANCE, minDistance)
+      putExtra(TrackingService.EXTRA_THROTTLE_MS, throttle)
+
+      if (options?.hasKey("socketUrl") == true) {
+        options.getString("socketUrl")?.let { putExtra(TrackingService.EXTRA_SOCKET_URL, it) }
+      }
+      if (options?.hasKey("token") == true) {
+        options.getString("token")?.let { putExtra(TrackingService.EXTRA_TOKEN, it) }
+      }
+      if (options?.hasKey("event") == true) {
+        options.getString("event")?.let { putExtra(TrackingService.EXTRA_EVENT, it) }
+      }
+      if (options?.hasKey("realtimeEvent") == true) {
+        options.getString("realtimeEvent")?.let { putExtra(TrackingService.EXTRA_REALTIME_EVENT, it) }
+      }
+      if (options?.hasKey("realtimeMinDistanceMeters") == true) {
+        putExtra(
+          TrackingService.EXTRA_REALTIME_MIN_DISTANCE,
+          options.getDouble("realtimeMinDistanceMeters").toFloat()
+        )
+      }
+      if (options?.hasKey("namespace") == true) {
+        options.getString("namespace")?.let { putExtra(TrackingService.EXTRA_NAMESPACE, it) }
+      }
     }
     startServiceCompat(i)
   }
 
   @ReactMethod
   fun update(options: ReadableMap) {
+    Log.i(TAG, "update() called with options=${options.toHashMap()}")
     val i = Intent(rc, TrackingService::class.java).apply {
       action = TrackingService.ACTION_UPDATE
       if (options.hasKey("intervalMs")) putExtra(TrackingService.EXTRA_INTERVAL_MS, options.getDouble("intervalMs").toLong())
@@ -64,6 +103,13 @@ class TrackingModule(private val rc: ReactApplicationContext) :
       if (options.hasKey("socketUrl")) putExtra(TrackingService.EXTRA_SOCKET_URL, options.getString("socketUrl"))
       if (options.hasKey("token")) putExtra(TrackingService.EXTRA_TOKEN, options.getString("token"))
       if (options.hasKey("event")) putExtra(TrackingService.EXTRA_EVENT, options.getString("event"))
+      if (options.hasKey("realtimeEvent")) putExtra(TrackingService.EXTRA_REALTIME_EVENT, options.getString("realtimeEvent"))
+      if (options.hasKey("realtimeMinDistanceMeters")) {
+        putExtra(
+          TrackingService.EXTRA_REALTIME_MIN_DISTANCE,
+          options.getDouble("realtimeMinDistanceMeters").toFloat()
+        )
+      }
       if (options.hasKey("namespace")) putExtra(TrackingService.EXTRA_NAMESPACE, options.getString("namespace"))
     }
     startServiceCompat(i)
@@ -71,6 +117,7 @@ class TrackingModule(private val rc: ReactApplicationContext) :
 
   @ReactMethod
   fun stop() {
+    Log.i(TAG, "stop() called")
     val i = Intent(rc, TrackingService::class.java).apply { action = TrackingService.ACTION_STOP }
     startServiceCompat(i)
   }

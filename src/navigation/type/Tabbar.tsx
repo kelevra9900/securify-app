@@ -1,25 +1,23 @@
-import type { TabParamList } from '../paths';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import type { RootState } from '@/store';
+import type {TabParamList} from '../paths';
+import type {BottomTabBarProps} from '@react-navigation/bottom-tabs';
+import type {RootState} from '@/store';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { FileText, Home, Map, MessageSquare, User } from 'lucide-react-native';
-import React, { useEffect, useRef } from 'react';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {FileText,Home,Map,MessageSquare,User} from 'lucide-react-native';
+import React,{useEffect,useRef} from 'react';
 import {
   Animated,
-  AppState,
-  AppStateStatus,
   Platform,
   StyleSheet,
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSelector } from 'react-redux';
+import {useSelector} from 'react-redux';
 
-import { usePanicFAB } from '@/hooks/UI/usePanicFAB';
+import {usePanicFAB} from '@/hooks/UI/usePanicFAB';
 
-import { CSafeAreaView, PanicFAB, TextLabel } from '@/components/atoms';
+import {CSafeAreaView,PanicFAB,TextLabel} from '@/components/atoms';
 import {
   ChatScreen,
   HomeScreen,
@@ -28,24 +26,23 @@ import {
   RoundsScreen,
 } from '@/screens';
 
-import { moderateScale } from '@/constants';
-import { useTheme } from '@/context/Theme';
-import { API_URL } from '@/utils/constants';
+import {moderateScale} from '@/constants';
+import {useTheme} from '@/context/Theme';
+import {API_URL} from '@/utils/constants';
 import {
   isIgnoringDozeWhitelist,
   requestIgnoreDozeWhitelist,
-  setTrackingAuth,
   startTracking,
   stopTracking,
 } from '@/utils/tracking';
 
-import { Paths } from '../paths';
+import {Paths} from '../paths';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
 const TAB_CONFIG = [
-  { component: HomeScreen, icon: Home, label: 'Inicio', name: Paths.Home },
-  { component: RoundsScreen, icon: Map, label: 'Rondas', name: Paths.Rounds },
+  {component: HomeScreen,icon: Home,label: 'Inicio',name: Paths.Home},
+  {component: RoundsScreen,icon: Map,label: 'Rondas',name: Paths.Rounds},
   {
     component: ChatScreen,
     icon: MessageSquare,
@@ -71,18 +68,18 @@ const CustomTabBar = ({
   navigation,
   state,
 }: BottomTabBarProps) => {
-  const { theme } = useTheme();
+  const {theme} = useTheme();
 
   return (
     <View
       style={[
         styles.tabBar,
-        { backgroundColor: theme.background, borderTopColor: theme.border },
+        {backgroundColor: theme.background,borderTopColor: theme.border},
       ]}
     >
-      {state.routes.map((route, index) => {
+      {state.routes.map((route,index) => {
         const isFocused = state.index === index;
-        const { options } = descriptors[route.key];
+        const {options} = descriptors[route.key];
         const label = options.tabBarLabel ?? options.title ?? route.name;
         const Icon = TAB_CONFIG.find((tab) => tab.name === route.name)?.icon;
 
@@ -91,17 +88,17 @@ const CustomTabBar = ({
         ).current;
 
         useEffect(() => {
-          Animated.timing(animation, {
+          Animated.timing(animation,{
             duration: 250,
             toValue: isFocused ? 1 : 0,
             useNativeDriver: true,
           }).start();
           // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [isFocused]);
+        },[isFocused]);
 
         const animatedStyle = {
           opacity: animation,
-          transform: [{ scaleX: animation }],
+          transform: [{scaleX: animation}],
         };
 
         return (
@@ -124,7 +121,7 @@ const CustomTabBar = ({
               style={[
                 styles.animatedTopBorder,
                 animatedStyle,
-                { backgroundColor: theme.highlight },
+                {backgroundColor: theme.highlight},
               ]}
             />
             {Icon && (
@@ -142,11 +139,11 @@ const CustomTabBar = ({
             >
               {typeof label === 'function'
                 ? label({
-                    children: '',
-                    color: isFocused ? theme.highlight : theme.textSecondary,
-                    focused: isFocused,
-                    position: 'below-icon',
-                  })
+                  children: '',
+                  color: isFocused ? theme.highlight : theme.textSecondary,
+                  focused: isFocused,
+                  position: 'below-icon',
+                })
                 : label}
             </TextLabel>
           </TouchableOpacity>
@@ -157,9 +154,9 @@ const CustomTabBar = ({
 };
 
 export default function TabNavigation() {
-  const { theme } = useTheme();
-  const { triggerSOS } = usePanicFAB();
+  const {theme} = useTheme();
   const token = useSelector((state: RootState) => state.auth.token);
+  const {triggerSOS} = usePanicFAB(token);
   const startedRef = useRef(false);
   const lastTokenRef = useRef<null | string>(null);
 
@@ -174,14 +171,7 @@ export default function TabNavigation() {
       const SOCKET_BASE = API_URL; // o SOCKET_URL si tienes otro host/puerto
       const NAMESPACE = '/tracker';
 
-      // Si ya arrancaste y solo cambió el token, refresca credenciales
-      if (startedRef.current && lastTokenRef.current !== token) {
-        setTrackingAuth(token, SOCKET_BASE, 'new_location'); // iOS: event opcional
-        lastTokenRef.current = token;
-        return;
-      }
-
-      if (!startedRef.current) {
+      if (token) {
         const res = await startTracking({
           namespace: NAMESPACE,
           socketUrl: SOCKET_BASE,
@@ -191,9 +181,11 @@ export default function TabNavigation() {
           intervalMs: 10_000,
           minDistanceMeters: 5,
           // iOS:
-          activityType: 'fitness', // o 'automotive' si trackean conducción
+          activityType: 'fitness',
+          eventName: 'new_location',
           throttleMs: 1500,
         });
+
 
         if (!isMounted) {
           return;
@@ -219,10 +211,12 @@ export default function TabNavigation() {
                 if (!whitelisted) {
                   requestIgnoreDozeWhitelist();
                 }
-                await AsyncStorage.setItem(KEY, '1');
-              }, 1500); // pequeño delay para no interrumpir al usuario
+                await AsyncStorage.setItem(KEY,'1');
+              },1500); // pequeño delay para no interrumpir al usuario
             }
-          } catch {}
+          } catch {
+
+          }
         }
       }
     }
@@ -237,15 +231,15 @@ export default function TabNavigation() {
       startedRef.current = false;
       lastTokenRef.current = null;
     };
-  }, [token]);
+  },[token]);
 
   return (
     <CSafeAreaView
       edges={['bottom']}
-      style={{ backgroundColor: theme.background, flex: 1 }}
+      style={{backgroundColor: theme.background,flex: 1}}
     >
       <Tab.Navigator
-        screenOptions={{ headerShown: false }}
+        screenOptions={{headerShown: false}}
         tabBar={(props) => <CustomTabBar {...props} />}
       >
         {TAB_CONFIG.map((tab) => (
@@ -254,6 +248,7 @@ export default function TabNavigation() {
             component={tab.component as any}
             key={tab.name}
             name={tab.name as keyof TabParamList}
+            options={{tabBarLabel: tab.label}}
           />
         ))}
       </Tab.Navigator>

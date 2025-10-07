@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import type {RecognizeFacePayload} from "@/hooks/mutations/useFaceRecognition";
 import {instance} from "../instance";
 import type {BiometricsResponse} from "@/types/biometrics";

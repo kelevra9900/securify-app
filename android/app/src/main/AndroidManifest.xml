@@ -7,6 +7,8 @@
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION"/>
+    <uses-permission android:name="android.permission.NFC" />
+  <uses-permission android:name="android.permission.VIBRATE" />
 
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
@@ -33,7 +35,7 @@
         android:name=".TrackingReceiver"
         android:exported="true">
         <intent-filter>
-          <action android:name="com.trablisarn.TRACKING_STOP"/>
+          <action android:name="com.securify.app.TRACKING_STOP"/>
         </intent-filter>
       </receiver>
       <activity

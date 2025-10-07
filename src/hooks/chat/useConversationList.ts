@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import {useCallback,useEffect,useState} from 'react';
 
-import { useGetCurrentUser } from '@/hooks/user/current_user';
+import {useGetCurrentUser} from '@/hooks/user/current_user';
 
-import { useChatSocket } from './useChatSocket'; // el que ya montaste para /v2/chat
+import {type ServerToClientEvents,useChatSocket} from './useChatSocket';
 
 export type ConversationListItem = {
   conversationId: number;
@@ -28,30 +28,14 @@ export type ConversationListItem = {
   unread?: boolean;
 };
 
-type ConversationsPayload = Array<ConversationListItem>;
-
-// evento del gateway cuando llega un mensaje nuevo
-type ReceiveMessageEvent = {
-  conversationId: number;
-  message: {
-    content: string;
-    conversationId: number;
-    createdAt: string; // ISO
-    fromUser?: { id: number; username?: string };
-    fromUserId: number;
-    id: number;
-    toUserId: number;
-  };
-};
-
 export function useConversationList() {
-  const { connected, socket } = useChatSocket(); // namespace /v2/chat
-  const { data: me } = useGetCurrentUser(); // para determinar unread
+  const {connected,emit,on} = useChatSocket();
+  const {data: me} = useGetCurrentUser();
   const myId = me?.user.id;
 
-  const [loading, setLoading] = useState(true);
-  const [items, setItems] = useState<ConversationListItem[]>([]);
-  const [error, setError] = useState<null | string>(null);
+  const [loading,setLoading] = useState(true);
+  const [items,setItems] = useState<ConversationListItem[]>([]);
+  const [error,setError] = useState<null | string>(null);
 
   const requestList = useCallback(() => {
     if (!connected) {
@@ -59,19 +43,16 @@ export function useConversationList() {
     }
     setLoading(true);
     setError(null);
-    socket?.emit('get_user_conversations');
-  }, [connected, socket]);
+    emit('get_user_conversations');
+  },[connected,emit]);
 
-  // Inicial + refresco por evento
   useEffect(() => {
     if (!connected) {
       return;
     }
-    // pedir lista inicial
     requestList();
 
-    const onList = (list: ConversationsPayload) => {
-      // marca unread local si el último mensaje es de otro usuario
+    const onList = (list: ConversationListItem[]) => {
       const enriched = list.map((c) => {
         const fromId = c.lastMessage?.fromUser?.id;
         return {
@@ -82,13 +63,12 @@ export function useConversationList() {
 
       setItems(enriched);
       setLoading(false);
-
-      // unirse a rooms para recibir receive_message
       enriched.forEach((c) => {
-        socket?.emit('join_room', { conversationId: c.conversationId });
+        emit('join_conversation',{conversationId: c.conversationId});
       });
     };
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onError = (e: any) => {
       setError(
         typeof e?.message === 'string'
@@ -98,14 +78,11 @@ export function useConversationList() {
       setLoading(false);
     };
 
-    socket?.on('user_conversations', onList);
-    socket?.on('error', onError);
+    const offList = on('user_conversations',onList);
+    const offError = on('error',onError);
 
-    return () => {
-      socket?.off('user_conversations', onList);
-      socket?.off('error', onError);
-    };
-  }, [connected, myId, requestList, socket]);
+    return () => {offList(); offError();};
+  },[connected,myId,requestList,on,emit]);
 
   // Mensajes en tiempo real: atualiza último mensaje y reordena
   useEffect(() => {
@@ -113,52 +90,49 @@ export function useConversationList() {
       return;
     }
 
-    const onReceive = (evt: ReceiveMessageEvent) => {
+    const onNewMessage: ServerToClientEvents['message:new'] = (msg) => {
       setItems((prev) => {
         const idx = prev.findIndex(
-          (c) => c.conversationId === evt.conversationId,
+          (c) => c.conversationId === msg.conversationId,
         );
-        const lastMsg = {
-          content: evt.message.content,
-          createdAt: evt.message.createdAt,
-          fromUser: evt.message.fromUser
-            ? { id: evt.message.fromUser.id }
-            : undefined,
-          id: evt.message.id,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const lastMsg: any = {
+          content: msg.content,
+          createdAt: msg.createdAt,
+          fromUser: msg.fromUser ?? undefined,
+          id: msg.id,
         };
 
         // si no existía (ej. conversación recién creada), agrega
         if (idx === -1) {
           const newItem: ConversationListItem = {
-            conversationId: evt.conversationId,
+            conversationId: msg.conversationId,
             isGroup: false, // si necesitas, puedes pedir al backend que lo incluya en el evento
             lastMessage: lastMsg,
             otherParticipant: null,
-            unread: myId != null && evt.message.fromUserId !== myId,
+            unread: myId != null && msg.fromUserId !== myId,
           };
-          return [newItem, ...prev];
+          return [newItem,...prev];
         }
 
         // actualiza y reordena (al inicio)
         const updated = [...prev];
         const curr = updated[idx];
-        const unread = myId != null && evt.message.fromUserId !== myId;
+        const unread = myId != null && msg.fromUserId !== myId;
 
-        updated[idx] = { ...curr, lastMessage: lastMsg, unread };
+        updated[idx] = {...curr,lastMessage: lastMsg,unread};
         // mueve a la primera posición
-        const [it] = updated.splice(idx, 1);
-        return [it, ...updated];
+        const [it] = updated.splice(idx,1);
+        return [it,...updated];
       });
     };
 
-    socket?.on('receive_message', onReceive);
+    const offNewMessage = on('message:new',onNewMessage);
 
-    return () => {
-      socket?.off('receive_message', onReceive);
-    };
-  }, [connected, myId, socket]);
+    return () => {offNewMessage();};
+  },[connected,myId,on]);
 
-  const refresh = useCallback(() => requestList(), [requestList]);
+  const refresh = useCallback(() => requestList(),[requestList]);
 
-  return { error, items, loading, refresh };
+  return {error,items,loading,refresh};
 }

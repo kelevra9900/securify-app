@@ -1,4 +1,4 @@
-package com.trablisarn
+package com.securify.app
 
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate

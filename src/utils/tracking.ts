@@ -1,15 +1,19 @@
 /* eslint-disable no-console */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NativeModules, PermissionsAndroid, Platform } from 'react-native';
+import {NativeModules,PermissionsAndroid,Platform} from 'react-native';
 
 type Void = Promise<void> | void;
-
 /** Firma real de lo que exportan tus bridges nativos */
 type TrackingModuleSpec = {
-  saveAuth: (token: string, socketUrl: string, event?: string) => Void; // iOS usa event; Android lo ignora
-  start: (options?: Record<string, any>) => Void;
+  saveAuth: (
+    token: string,
+    socketUrl: string,
+    event?: string,
+    namespace?: string,
+  ) => Void;
+  start: (options?: Record<string,any>) => Void;
   stop: () => Void;
-  update: (options?: Record<string, any>) => Void;
+  update: (options?: Record<string,any>) => Void;
 
   // Android-only (opcionales en iOS)
   isIgnoringBatteryOptimizations?: () => Promise<boolean>;
@@ -33,11 +37,11 @@ type NativeLocation = {
 };
 
 type Options = {
-  enableHighAccuracy?: boolean; // default true
-  timeoutMs?: number; // default 10000
+  enableHighAccuracy?: boolean;
+  timeoutMs?: number;
 };
 
-const { GeolocationModule } = NativeModules as {
+const {GeolocationModule} = NativeModules as {
   GeolocationModule?: {
     getCurrentPosition: (options?: Options) => Promise<NativeLocation>;
     requestPermissions: () => void;
@@ -66,7 +70,7 @@ export async function getCurrentPositionNative(
     // iOS: puedes invocar requestPermissions antes desde tu flujo si deseas
   }
 
-  const { enableHighAccuracy = true, timeoutMs = 10_000 } = opts;
+  const {enableHighAccuracy = true,timeoutMs = 10_000} = opts;
   return GeolocationModule.getCurrentPosition({
     enableHighAccuracy,
     timeoutMs,
@@ -109,7 +113,7 @@ function getTrackingModule(): TrackingModuleSpec {
       typeof (mod as any).start === 'function' &&
       typeof (mod as any).saveAuth === 'function';
 
-    console.log(`[${MODULE_NAME}] ready:`, ok);
+    console.log(`[${MODULE_NAME}] ready:`,ok);
   }
   return mod;
 }
@@ -169,18 +173,18 @@ export async function requestAllLocationPermissions(): Promise<{
         fg === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN
           ? 'never_ask_again'
           : 'denied';
-      return { ok: false, reason };
+      return {ok: false,reason};
     }
     const bgOk = await requestAndroidBackgroundIfNeeded();
     if (!bgOk) {
-      return { ok: false, reason: 'background_denied' };
+      return {ok: false,reason: 'background_denied'};
     }
 
     await requestAndroidNotificationsIfNeeded();
-    return { ok: true };
+    return {ok: true};
   }
   const iosOk = await requestIOSPermissions();
-  return { ok: iosOk };
+  return {ok: iosOk};
 }
 
 /* =========================
@@ -192,8 +196,12 @@ export type StartTrackingCommon = {
   token: string;
   /** iOS only: Socket.IO event name. Defaults to 'new_location'. */
   eventName?: string;
+  /** Evento rápido que solo actualiza caché en el backend. */
+  realtimeEventName?: string;
   /** Namespace para ambos (se normaliza con /) */
   namespace?: string;
+  /** Android: distancia mínima para disparar el evento de tiempo real. */
+  realtimeMinDistanceMeters?: number;
 };
 
 export type StartTrackingAndroid = {
@@ -215,9 +223,9 @@ function normalizeNamespace(ns?: string): string {
 
 export async function startTracking(
   opts: StartTrackingAndroid & StartTrackingCommon & StartTrackingIOS,
-): Promise<{ ok: boolean; reason?: string }> {
+): Promise<{ok: boolean; reason?: string}> {
   if (!opts.socketUrl || !opts.token) {
-    return { ok: false, reason: 'missing_auth' };
+    return {ok: false,reason: 'missing_auth'};
   }
 
   const perm = await requestAllLocationPermissions();
@@ -227,41 +235,52 @@ export async function startTracking(
 
   const mod = getTrackingModule();
   const namespace = normalizeNamespace(opts.namespace);
+  const eventName = opts.eventName ?? 'new_location';
+  const realtimeEvent = opts.realtimeEventName ?? 'update_location';
+  const realtimeMinDistance = opts.realtimeMinDistanceMeters ?? 1;
 
   if (Platform.OS === 'android') {
-    await mod.saveAuth(opts.token, opts.socketUrl);
+    console.log('Options info',opts);
+    await mod.saveAuth(opts.token,opts.socketUrl,eventName,namespace);
     await mod.start({
+      event: eventName,
+      fastestMs: opts.fastestMs ?? 5000,
+      intervalMs: opts.intervalMs ?? 10_000,
+      // Respeta lo que venga de opts, con un buen default para BD:
+      minDistanceMeters: typeof opts.minDistanceMeters === 'number' ? opts.minDistanceMeters : 40,
+      namespace,
+      realtimeEvent,
+      realtimeMinDistanceMeters: realtimeMinDistance,
+      socketEvent: 'new_location',
+      socketUrl: opts.socketUrl,
+      throttleMs: typeof opts.throttleMs === 'number' ? opts.throttleMs : 60_000, // 1 min
+      token: opts.token,
+    });
+
+  } else {
+    await mod.saveAuth(opts.token,opts.socketUrl,eventName);
+    await mod.start({
+      event: eventName,
       fastestMs: opts.fastestMs ?? 5000,
       intervalMs: opts.intervalMs ?? 10_000,
       minDistanceMeters: opts.minDistanceMeters ?? 5,
       namespace,
+      realtimeEvent,
       socketUrl: opts.socketUrl,
       token: opts.token,
     });
-  } else {
-    await mod.saveAuth(
-      opts.token,
-      opts.socketUrl,
-      opts.eventName ?? 'new_location',
-    );
-    await mod.start({
-      activityType: opts.activityType ?? 'fitness',
-      minDistanceMeters: opts.minDistanceMeters ?? 5,
-      namespace,
-      throttleMs: opts.throttleMs ?? 1500,
-    });
   }
 
-  return { ok: true };
+  return {ok: true};
 }
 
 export function updateTracking(
   config: Partial<
-    { namespace: string } & StartTrackingAndroid & StartTrackingIOS
+    {namespace: string; realtimeMinDistanceMeters: number} & StartTrackingAndroid & StartTrackingIOS
   >,
 ): void {
   const mod = getTrackingModule();
-  const payload: Record<string, any> = {};
+  const payload: Record<string,any> = {};
   if (typeof config.minDistanceMeters === 'number') {
     payload.minDistanceMeters = config.minDistanceMeters;
   }
@@ -280,6 +299,9 @@ export function updateTracking(
   if (config.namespace) {
     payload.namespace = normalizeNamespace(config.namespace);
   }
+  if (typeof config.realtimeMinDistanceMeters === 'number') {
+    payload.realtimeMinDistanceMeters = config.realtimeMinDistanceMeters;
+  }
   mod.update(payload);
 }
 
@@ -294,9 +316,9 @@ export function setTrackingAuth(
 ): void {
   const mod = getTrackingModule();
   if (Platform.OS === 'android') {
-    mod.saveAuth(token, socketUrl);
+    mod.saveAuth(token,socketUrl,eventName ?? 'save_location','/tracker');
   } else {
-    mod.saveAuth(token, socketUrl, eventName ?? 'new_location');
+    mod.saveAuth(token,socketUrl,eventName ?? 'save_location');
   }
 }
 
@@ -341,4 +363,25 @@ export function requestIOSLocationPromptsNow(): void {
     return;
   }
   getTrackingModule().requestPermissions?.();
+}
+
+
+export async function requestLocationPermission(): Promise<boolean> {
+  if (Platform.OS === 'ios') {
+    // Opcional: si quieres forzar el prompt de iOS (puedes invocarlo antes en otra pantalla)
+    // NativeModules.GeolocationModule?.requestPermissions?.();
+    return true; // iOS gestiona el prompt la primera vez; aquí no bloqueamos.
+  }
+  // Android
+  const fine = await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+  );
+  const coarse = await PermissionsAndroid.request(
+    PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+  );
+
+  return (
+    fine === PermissionsAndroid.RESULTS.GRANTED ||
+    coarse === PermissionsAndroid.RESULTS.GRANTED
+  );
 }

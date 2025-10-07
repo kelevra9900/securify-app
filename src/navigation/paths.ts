@@ -5,20 +5,23 @@ export const enum Paths {
   Attendances = 'attendances',
   Chat = 'chat',
   ChatDetail = 'chatDetail',
+  Control = 'control',
   CreateReport = 'createReport',
   Documents = 'documents',
   FaceCamera = 'faceCamera',
   Home = 'home',
   Login = 'login',
+  LoginWithCredentials = 'loginWithCredentials',
   Notifications = 'notifications',
   PreviewRound = 'previewRound',
   Profile = 'profile',
   Reports = 'reports',
   Rounds = 'rounds',
+  SectorSelector = 'sectorSelector',
   Splash = 'splash',
   TabBarNavigation = 'tabBarNavigation',
   Tasks = 'tasks',
-  Walk = 'walk',
+  Walk = 'walk'
 }
 
 export type TabParamList = {

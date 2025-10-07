@@ -5,9 +5,8 @@ import axios,{AxiosHeaders} from 'axios';
 import {Platform} from 'react-native';
 
 import store from '@/store';
+import {clearCredentials,setCredentials} from '@/store/reducers/auth';
 import {API_URL} from '@/utils/constants';
-
-// const API_BASE_URL = Config.API_URL ?? '';
 
 let RNLocalize: any;
 try {
@@ -15,6 +14,85 @@ try {
 } catch {
   RNLocalize = null;
 }
+
+type StoredCredentials = {
+  refreshToken: string;
+  token: string;
+};
+
+interface RefreshTokenResponse {
+  accessToken?: string;
+  jwt?: string;
+  refreshToken?: string;
+  token?: string;
+}
+
+const REFRESH_ENDPOINT = 'mobile/auth/refresh-token';
+const ensureTrailingSlash = (base: string): string =>
+  base.endsWith('/') ? base : `${base}/`;
+const REFRESH_URL = `${ensureTrailingSlash(API_URL)}${REFRESH_ENDPOINT}`;
+
+let refreshPromise: null | Promise<null | StoredCredentials> = null;
+
+const requestTokenRefresh = async (): Promise<null | StoredCredentials> => {
+  const state = store.getState() as any;
+  const currentRefreshToken: null | string | undefined = state?.auth?.refreshToken;
+  if (!currentRefreshToken) {
+    return null;
+  }
+
+  try {
+    const {data} = await axios.post<RefreshTokenResponse>(
+      REFRESH_URL,
+      {refreshToken: currentRefreshToken},
+      {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+        timeout: 15_000,
+      },
+    );
+
+    const nextToken =
+      (typeof data?.jwt === 'string' && data.jwt) ||
+      (typeof data?.token === 'string' && data.token) ||
+      (typeof data?.accessToken === 'string' && data.accessToken) ||
+      null;
+
+    if (!nextToken) {
+      return null;
+    }
+
+    const nextRefreshToken =
+      (typeof data?.refreshToken === 'string' && data.refreshToken) ||
+      currentRefreshToken;
+
+    store.dispatch(
+      setCredentials({
+        refreshToken: nextRefreshToken,
+        token: nextToken,
+      }),
+    );
+
+    return {
+      refreshToken: nextRefreshToken,
+      token: nextToken,
+    };
+  } catch (refreshError) {
+    console.warn('Token refresh failed',refreshError);
+    return null;
+  }
+};
+
+const enqueueTokenRefresh = (): Promise<null | StoredCredentials> => {
+  if (!refreshPromise) {
+    refreshPromise = requestTokenRefresh().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+};
 
 function resolveTimezone(): string {
   return (
@@ -38,21 +116,11 @@ function isFormData(data: unknown): boolean {
   return typeof FormData !== 'undefined' && data instanceof FormData;
 }
 
-// clave para caché ETag (si la usas)
-function cacheKeyFor(config: any,tz: string,userId?: number | string) {
-  const base = config.baseURL || API_URL;
-  const url = base ? new URL(config.url,base).toString() : String(config.url);
-  const params = config.params ? JSON.stringify(config.params) : '';
-  const uid = userId ?? 'anon';
-  const method = (config.method || 'get').toLowerCase();
-  return `v1|${method}|${url}|p:${params}|tz:${tz}|u:${uid}`;
-}
-
 export const instance = axios.create({
   baseURL: API_URL,
   headers: {
     Accept: 'application/json',
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   },
   timeout: 20_000,
 });
@@ -61,8 +129,6 @@ instance.interceptors.request.use(
   async (config) => {
     const state = store.getState();
     const token: string | undefined = state?.auth?.token || undefined;
-    const userID = state?.profile?.user?.id;
-
     const platform = Platform.OS === 'ios' ? 'ios' : 'android';
     const tz = resolveTimezone();
     const lang = resolveLanguage();
@@ -70,7 +136,6 @@ instance.interceptors.request.use(
     const appBuild = '1';
 
     const headers = AxiosHeaders.from(config.headers);
-    const method = (config.method || 'get').toUpperCase();
     const sendingForm = isFormData(config.data);
 
     // —— Headers comunes ——
@@ -93,35 +158,20 @@ instance.interceptors.request.use(
     // —— Content-Type según body ——
     if (sendingForm) {
       headers.delete('Content-Type');
-      headers.delete('content-type');
+      headers.set('Content-Type','multipart/form-data');
     } else {
       if (!headers.has('Content-Type') && !headers.has('content-type')) {
         headers.set('Content-Type','application/json');
       }
     }
 
-    // —— ETag solo para GET/HEAD ——
-    const key = cacheKeyFor(config,tz,userID);
-    (config as any).metadata = {cacheKey: key};
-    if (method === 'GET' || method === 'HEAD') {
-      try {
-        const etag = await AsyncStorage.getItem(`${key}:etag`);
-        if (etag) {
-          headers.set('If-None-Match',etag);
-        }
-      } catch {
-        /* noop */
-      }
-    } else {
-      headers.delete('If-None-Match');
-    }
-
     config.headers = headers;
 
-    // Logs (evita en prod). Ojo con FormData: no intentes serializarlo.
     try {
       const base = config.baseURL || API_URL || '';
-      const absolute = config.url ? new URL(config.url as any,base as any).toString() : '';
+      const absolute = config.url
+        ? new URL(config.url as any,base as any).toString()
+        : '';
       console.log('REQUEST ===>',{
         absolute_url: absolute,
         base_url: base,
@@ -174,11 +224,23 @@ instance.interceptors.response.use(
     const resp = error?.response;
 
     console.log('Error on request',error);
-    if (!resp && (error?.message?.includes('Network Error') || error?.code === 'ERR_NETWORK')) {
+    if (
+      !resp &&
+      (error?.message?.includes('Network Error') ||
+        error?.code === 'ERR_NETWORK')
+    ) {
       const base = error?.config?.baseURL || API_URL;
       const url = error?.config?.url;
       console.warn('Network Error (no HTTP response). Check:',{
-        absolute_url: url ? (() => {try {return new URL(url as any,base as any).toString();} catch {return url;} })() : url,
+        absolute_url: url
+          ? (() => {
+            try {
+              return new URL(url as any,base as any).toString();
+            } catch {
+              return url;
+            }
+          })()
+          : url,
         base,
         url,
       });
@@ -209,7 +271,27 @@ instance.interceptors.response.use(
 
     if (resp?.status === 401) {
       console.warn('Unauthorized (401)');
-      // TODO: dispatch logout/refresh
+
+      const originalRequest = error.config;
+      const requestUrl = (originalRequest?.url as string | undefined) ?? '';
+      const isRefreshAttempt = requestUrl.includes(REFRESH_ENDPOINT);
+
+      if (originalRequest && !(originalRequest as any).__isRetryRequest && !isRefreshAttempt) {
+        try {
+          const refreshed = await enqueueTokenRefresh();
+          if (refreshed?.token) {
+            (originalRequest as any).__isRetryRequest = true;
+            const headers = AxiosHeaders.from(originalRequest.headers ?? {});
+            headers.set('Authorization',`Bearer ${refreshed.token}`);
+            originalRequest.headers = headers;
+            return instance.request(originalRequest);
+          }
+        } catch (error_) {
+          console.warn('Failed to recover from 401',error_);
+        }
+      }
+
+      store.dispatch(clearCredentials());
     }
 
     throw error;

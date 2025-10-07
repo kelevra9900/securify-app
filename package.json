@@ -13,15 +13,19 @@
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
     "@react-native-community/netinfo": "^11.4.1",
+    "@react-native-firebase/app": "^23.3.1",
+    "@react-native-firebase/app-distribution": "^23.3.1",
+    "@react-native/codegen": "^0.81.1",
+    "@react-native/gradle-plugin": "^0.81.1",
     "@react-navigation/bottom-tabs": "^7.4.7",
     "@react-navigation/native": "^7.1.17",
     "@react-navigation/native-stack": "^7.3.26",
     "@react-navigation/stack": "^7.4.8",
     "@reduxjs/toolkit": "^2.8.2",
-    "@sentry/react-native": "^7.0.1",
+    "@sentry/react-native": "^7.2.0",
     "@shopify/flash-list": "^2.0.3",
     "@tanstack/react-query": "^5.85.9",
-    "axios": "^1.10.0",
+    "axios": "^1.12.2",
     "lucide-react-native": "^0.542.0",
     "luxon": "^3.7.1",
     "moti": "^0.30.0",
@@ -37,11 +41,11 @@
     "react-native-localize": "^3.5.1",
     "react-native-mmkv": "^3.3.0",
     "react-native-reanimated": "^4.1.0",
-    "react-native-safe-area-context": "5.5.2",
+    "react-native-safe-area-context": "^5.5.2",
     "react-native-screens": "^4.15.4",
     "react-native-svg": "^15.12.1",
     "react-native-vision-camera": "^4.7.0",
-    "react-native-worklets": "^0.5.0",
+    "react-native-worklets": "^0.5.1",
     "react-redux": "^9.2.0",
     "redux-persist": "^6.0.0",
     "socket.io-client": "^4.8.1",
@@ -95,5 +99,5 @@
   "engines": {
     "node": ">=18"
   },
-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
+  "packageManager": "pnpm@10.17.1+sha512.17c560fca4867ae9473a3899ad84a88334914f379be46d455cbf92e5cf4b39d34985d452d2583baf19967fa76cb5c17bc9e245529d0b98745721aa7200ecaf7a"
 }

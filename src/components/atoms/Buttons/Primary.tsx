@@ -1,6 +1,8 @@
 import React from 'react';
 import type {ViewStyle} from 'react-native';
 import {StyleSheet,Text,TouchableOpacity} from 'react-native';
+
+import {colors} from '@/assets/theme/colors';
 import {useTheme} from '@/context/Theme';
 
 type Props = {
@@ -14,20 +16,25 @@ type Props = {
 const PrimaryButton = ({disabled = false,label,loading = false,onPress,style = {}}: Props) => {
 	const {theme} = useTheme();
 
+	const disabledStyles = disabled
+		? {
+			backgroundColor: theme.border,
+			borderColor: `${theme.highlight}33`,
+			borderWidth: StyleSheet.hairlineWidth,
+			elevation: 0,
+			opacity: 0.85,
+			shadowOpacity: 0,
+		}
+		: {backgroundColor: theme.highlight};
+
+	const textColor = disabled ? `${colors.white}BF` : theme.textPrimary;
+
 	return (
 		<TouchableOpacity
 			disabled={disabled}
 			onPress={onPress}
-			style={[
-				styles.button,
-				{backgroundColor: disabled ? theme.disabled : theme.highlight},
-				style,
-			]}>
-			<Text
-				style={[
-					styles.text,
-					{color: disabled ? theme.textSecondary : theme.textPrimary},
-				]}>
+			style={[styles.button,disabledStyles,style]}>
+			<Text style={[styles.text,{color: textColor}]}>
 				{loading ? 'Cargando...' : label}
 			</Text>
 		</TouchableOpacity>

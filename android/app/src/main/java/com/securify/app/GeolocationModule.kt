@@ -1,4 +1,4 @@
-package com.trablisarn
+package com.securify.app
 
 import android.Manifest
 import android.content.pm.PackageManager
@@ -38,9 +38,9 @@ class GeolocationModule(private val rc: ReactApplicationContext) :
     val enableHighAccuracy = options?.getBoolean("enableHighAccuracy") ?: true
 
     val priority = if (enableHighAccuracy) {
-      Priority.PRIORITY_HIGH_ACCURACY
+      LocationRequest.PRIORITY_HIGH_ACCURACY
     } else {
-      Priority.PRIORITY_BALANCED_POWER_ACCURACY
+      LocationRequest.PRIORITY_BALANCED_POWER_ACCURACY
     }
 
     val cts = CancellationTokenSource()

@@ -1,9 +1,9 @@
-import type { RootStackParamList } from './types';
+import type {RootStackParamList} from './types';
 
-import { NavigationContainer } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View } from 'react-native';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {View} from 'react-native';
+import {SafeAreaProvider} from 'react-native-safe-area-context';
 
 import {
   ActiveRound,
@@ -11,22 +11,25 @@ import {
   AnnouncementScreen,
   AttendancesScreen,
   ChatDetailScreen,
+  ControlScreen,
   CreateReportScreen,
   DocumentsScreen,
   FaceCameraScreen,
   ListRounds,
   LoginScreen,
+  LoginWithCredentials,
   NotificationsScreen,
   PreviewRound,
   RoundWalkScreen,
+  SectorSelector,
   SplashScreen,
-  TasksScreen,
+  TasksScreen
 } from '@/screens';
 
-import { colors } from '@/assets/theme';
-import { ThemeProvider } from '@/context/Theme';
+import {colors} from '@/assets/theme';
+import {ThemeProvider} from '@/context/Theme';
 
-import { Paths } from './paths';
+import {Paths} from './paths';
 import TabBarNavigation from './type/Tabbar';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -36,22 +39,25 @@ function ApplicationNavigator() {
     <SafeAreaProvider>
       <ThemeProvider>
         <NavigationContainer>
-          <View style={{ backgroundColor: colors.background, flex: 1 }}>
+          <View style={{backgroundColor: colors.background,flex: 1}}>
             <Stack.Navigator
               initialRouteName={Paths.Splash}
-              screenOptions={{ headerShown: false }}
+              screenOptions={{headerShown: false}}
             >
               <Stack.Screen component={SplashScreen} name={Paths.Splash} />
               <Stack.Screen component={LoginScreen} name={Paths.Login} />
+              <Stack.Screen component={SectorSelector} name={Paths.SectorSelector} />
+              <Stack.Screen component={ControlScreen} name={Paths.Control} />
+              <Stack.Screen component={LoginWithCredentials} name={Paths.LoginWithCredentials} />
               <Stack.Screen
                 component={TabBarNavigation}
                 name={Paths.TabBarNavigation}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 component={TasksScreen}
                 name={Paths.Tasks}
-                options={{ headerShown: false }}
+                options={{headerShown: false}}
               />
               <Stack.Screen
                 component={CreateReportScreen}

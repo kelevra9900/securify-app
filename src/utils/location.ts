@@ -1,12 +1,17 @@
-import { PermissionsAndroid, Platform } from 'react-native';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* utils/location.ts */
+import {NativeModules,PermissionsAndroid,Platform} from 'react-native';
 
-export type LatLng = { accuracy?: number; latitude: number; longitude: number };
+// ==== Tipos ====
+
+export type LatLng = {accuracy?: number; latitude: number; longitude: number};
 
 export type GetLocationOptions = {
   enableHighAccuracy?: boolean; // default true
-  maximumAgeMs?: number; // default 1000ms (usar cache reciente)
-  requestPermission?: boolean; // default true
-  timeoutMs?: number; // default 10s
+  maximumAgeMs?: number;        // no-op en nativo; útil si haces fallback a RN Geolocation
+  pollMs?: number;              // solo para watch por polling, default 2s
+  requestPermission?: boolean;  // default true
+  timeoutMs?: number;           // default 10s
 };
 
 export class LocationError extends Error {
@@ -16,27 +21,54 @@ export class LocationError extends Error {
     | 'timeout'
     | 'unavailable'
     | 'unknown';
-  constructor(code: LocationError['code'], message?: string) {
+  constructor(code: LocationError['code'],message?: string) {
     super(message ?? code);
     this.name = 'LocationError';
     this.code = code;
   }
 }
 
-/** Pide permiso de ubicación y devuelve true si fue concedido. */
+// ==== Acceso al módulo nativo (Android) y fallback (iOS/dev) ====
+
+type NativeLocation = {
+  accuracy?: number;
+  altitude?: number;
+  bearing?: number;
+  latitude: number;
+  longitude: number;
+  speed?: number;
+  timestamp: number; // ms
+};
+
+type NativeGeoModule = {
+  getCurrentPosition: (options?: {enableHighAccuracy?: boolean; timeoutMs?: number}) => Promise<NativeLocation>;
+  requestPermissions?: () => void;
+};
+
+const {GeolocationModule} = NativeModules as {
+  GeolocationModule?: NativeGeoModule;
+};
+
+// Fallback a react-native-geolocation (opcional)
+let RNGeolocation: any;
+try {
+  RNGeolocation = require('@react-native-community/geolocation').default ?? require('@react-native-community/geolocation');
+} catch { /* opcional */}
+
+// ==== Permisos ====
+
 export async function ensureLocationPermission(): Promise<boolean> {
   if (Platform.OS === 'ios') {
-    // Muestra el prompt del sistema (no devuelve el estado).
-    // Si ya estaba concedido, no hace nada.
-    Geolocation.requestAuthorization?.();
-    return true; // iOS no expone un resultado; el error real se manejará en getCurrentPosition
+    // Si tu módulo iOS expone requestPermissions, se puede llamar aquí.
+    GeolocationModule?.requestPermissions?.();
+    return true;
   }
 
   // ANDROID
   const fine = PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION;
   const coarse = PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION;
 
-  const res = await PermissionsAndroid.requestMultiple([fine, coarse]);
+  const res = await PermissionsAndroid.requestMultiple([fine,coarse]);
   const granted =
     res[fine] === PermissionsAndroid.RESULTS.GRANTED ||
     res[coarse] === PermissionsAndroid.RESULTS.GRANTED;
@@ -44,62 +76,76 @@ export async function ensureLocationPermission(): Promise<boolean> {
   return granted;
 }
 
-/** Normaliza las opciones a las que requiere el módulo. */
-function toGeoOptions(opts: GetLocationOptions): GeolocationOptions {
-  const {
-    enableHighAccuracy = true,
-    maximumAgeMs = 1000,
-    timeoutMs = 10_000,
-  } = opts;
+// ==== Core helpers ====
 
+function normalizeOptions(opts: GetLocationOptions) {
   return {
-    enableHighAccuracy,
-    maximumAge: maximumAgeMs,
-    timeout: timeoutMs,
+    enableHighAccuracy: opts.enableHighAccuracy ?? true,
+    maximumAgeMs: opts.maximumAgeMs ?? 1000,
+    pollMs: Math.max(500,opts.pollMs ?? 2000),
+    timeoutMs: opts.timeoutMs ?? 10_000,
   };
 }
 
-/** Obtiene la ubicación actual (promesa). Lanza LocationError tipado. */
+function mapNativeErrorToLocationError(e: any): LocationError {
+  const msg = (e?.message as string) ?? String(e ?? '');
+  const code = (e?.code as string) ?? '';
+  if (code === 'E_PERMISSION') {return new LocationError('permission_denied',msg);}
+  if (code === 'E_TIMEOUT') {return new LocationError('timeout',msg);}
+  if (code === 'E_LOCATION') {return new LocationError('unavailable',msg);}
+  // genérico
+  return new LocationError('unknown',msg);
+}
+
+// ==== API pública ====
+
+/** Obtiene la ubicación actual usando el módulo nativo si existe; si no, usa RN Geolocation. */
 export async function getCurrentLatLng(
   opts: GetLocationOptions = {},
 ): Promise<LatLng> {
-  const { requestPermission = true } = opts;
+  const {requestPermission = true} = opts;
+  const {enableHighAccuracy,maximumAgeMs,timeoutMs} = normalizeOptions(opts);
 
   if (requestPermission) {
     const ok = await ensureLocationPermission();
-    if (!ok) {
-      throw new LocationError(
-        'permission_denied',
-        'Permiso de ubicación denegado',
-      );
+    if (!ok) {throw new LocationError('permission_denied','Permiso de ubicación denegado');}
+  }
+
+  // 1) Preferir el módulo nativo (Android)
+  if (GeolocationModule?.getCurrentPosition) {
+    try {
+      const loc = await GeolocationModule.getCurrentPosition({enableHighAccuracy,timeoutMs});
+      return {accuracy: loc.accuracy,latitude: loc.latitude,longitude: loc.longitude};
+    } catch (error) {
+      throw mapNativeErrorToLocationError(error);
     }
   }
 
-  const geoOpts = toGeoOptions(opts);
+  // 2) Fallback a RN Geolocation (iOS / dev)
+  if (!RNGeolocation?.getCurrentPosition) {
+    throw new LocationError('unavailable','Geolocation no disponible');
+  }
 
-  return new Promise<LatLng>((resolve, reject) => {
-    Geolocation.getCurrentPosition(
-      (pos: GeolocationResponse) => {
-        const { accuracy, latitude, longitude } = pos.coords;
-        resolve({ accuracy, latitude, longitude });
+  return new Promise<LatLng>((resolve,reject) => {
+    RNGeolocation.getCurrentPosition(
+      (pos: any) => {
+        const {accuracy,latitude,longitude} = pos.coords;
+        resolve({accuracy,latitude,longitude});
       },
-      (err: GeolocationError) => {
+      (err: any) => {
         // https://github.com/react-native-geolocation/react-native-geolocation#errors
         switch (err.code) {
-          case 1: // PERMISSION_DENIED
-            reject(new LocationError('permission_denied', err.message));
-            break;
-          case 2: // POSITION_UNAVAILABLE (GPS/servicios apagados o sin fix)
-            reject(new LocationError('services_disabled', err.message));
-            break;
-          case 3: // TIMEOUT
-            reject(new LocationError('timeout', err.message));
-            break;
-          default:
-            reject(new LocationError('unknown', err.message));
+          case 1: reject(new LocationError('permission_denied',err.message)); break;
+          case 2: reject(new LocationError('services_disabled',err.message)); break;
+          case 3: reject(new LocationError('timeout',err.message)); break;
+          default: reject(new LocationError('unknown',err.message));
         }
       },
-      geoOpts,
+      {
+        enableHighAccuracy,
+        maximumAge: maximumAgeMs,
+        timeout: timeoutMs,
+      },
     );
   });
 }
@@ -115,52 +161,47 @@ export async function tryGetCurrentLatLng(
   }
 }
 
-/** Inicia un watch (seguimiento continuo). Devuelve el watchId y un `stop()` */
+/**
+ * Watch por polling (cada pollMs hace getCurrentLatLng). Útil hasta que tengas un watch nativo.
+ * Devuelve { watchId, stop }.
+ */
 export async function startLocationWatch(
   cb: (loc: LatLng) => void,
   errCb?: (e: LocationError) => void,
   opts: GetLocationOptions = {},
-): Promise<{ stop: () => void; watchId: number }> {
-  const { requestPermission = true } = opts;
+): Promise<{stop: () => void; watchId: number}> {
+  const {requestPermission = true} = opts;
+  const {pollMs} = normalizeOptions(opts);
+
   if (requestPermission) {
     const ok = await ensureLocationPermission();
-    if (!ok) {
-      throw new LocationError(
-        'permission_denied',
-        'Permiso de ubicación denegado',
-      );
-    }
+    if (!ok) {throw new LocationError('permission_denied','Permiso de ubicación denegado');}
   }
 
-  const geoOpts = toGeoOptions(opts);
+  let stopped = false;
+  const watchId = Date.now();
 
-  const watchId = Geolocation.watchPosition(
-    (pos: GeolocationResponse) => {
-      const { accuracy, latitude, longitude } = pos.coords;
-      cb({ accuracy, latitude, longitude });
-    },
-    (err: GeolocationError) => {
-      const map =
-        err.code === 1
-          ? 'permission_denied'
-          : err.code === 2
-            ? 'services_disabled'
-            : err.code === 3
-              ? 'timeout'
-              : 'unknown';
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      errCb?.(new LocationError(map as any, err.message));
-    },
-    geoOpts,
-  );
+  const tick = async () => {
+    if (stopped) {return;}
+    try {
+      const loc = await getCurrentLatLng({...opts,requestPermission: false});
+      if (!stopped) {cb(loc);}
+    } catch (error) {
+      if (!stopped) {errCb?.(error as LocationError);}
+    } finally {
+      if (!stopped) {setTimeout(tick,pollMs);}
+    }
+  };
+
+  tick();
 
   return {
-    stop: () => Geolocation.clearWatch(watchId),
+    stop: () => {stopped = true;},
     watchId,
   };
 }
 
-/** Limpia todos los observers (por si tu pantalla sale y quieres asegurar) */
+/** No-op para esta implementación por polling; útil si usas RNGeolocation.watchPosition */
 export function stopAllLocationObservers() {
-  Geolocation.stopObserving();
+  // Si usas RNGeolocation.watchPosition en algún lugar, aquí podrías limpiar.
 }

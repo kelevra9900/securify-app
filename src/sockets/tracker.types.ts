@@ -21,4 +21,5 @@ export interface TrackerListenEvents extends SocketEventsMap {
 /** client -> server */
 export interface TrackerEmitEvents extends SocketEventsMap {
 	new_location: SocketHandler<[LocationPayload]>;
+	update_location: SocketHandler<[LocationPayload]>;
 }

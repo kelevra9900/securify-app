@@ -1,5 +1,5 @@
-import type { Paths } from './paths';
-import type { StackScreenProps } from '@react-navigation/stack';
+import type {Paths} from './paths';
+import type {StackScreenProps} from '@react-navigation/stack';
 
 export type RootStackParamList = {
   [Paths.ActiveRound]: {
@@ -17,17 +17,20 @@ export type RootStackParamList = {
     conversationId: number;
     title: string;
   };
+  [Paths.Control]: undefined;
   [Paths.CreateReport]: undefined;
   [Paths.Documents]: undefined;
   [Paths.FaceCamera]: undefined;
   [Paths.Home]: undefined;
   [Paths.Login]: undefined;
+  [Paths.LoginWithCredentials]: undefined;
   [Paths.Notifications]: undefined;
   [Paths.PreviewRound]: undefined;
   [Paths.Profile]: undefined;
   [Paths.Reports]: undefined;
   [Paths.Rounds]: undefined;
   [Paths.Rounds]: undefined;
+  [Paths.SectorSelector]: undefined;
   [Paths.Splash]: undefined;
   [Paths.TabBarNavigation]: undefined;
   [Paths.Tasks]: undefined;
@@ -36,4 +39,4 @@ export type RootStackParamList = {
 
 export type RootScreenProps<
   S extends keyof RootStackParamList = keyof RootStackParamList,
-> = StackScreenProps<RootStackParamList, S>;
+> = StackScreenProps<RootStackParamList,S>;

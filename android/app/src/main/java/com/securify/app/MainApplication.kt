@@ -1,4 +1,4 @@
-package com.trablisarn
+package com.securify.app
 
 import android.app.Application
 import com.facebook.react.PackageList

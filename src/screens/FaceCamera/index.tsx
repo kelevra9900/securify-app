@@ -2,15 +2,13 @@ import type {
   Camera as CameraRefType,
   PhotoFile,
 } from 'react-native-vision-camera';
-import type { RootScreenProps } from '@/navigation/types';
+import type {RootScreenProps} from '@/navigation/types';
 
-import { useIsFocused } from '@react-navigation/native';
-import React, { useCallback, useRef, useState } from 'react';
+import {useIsFocused} from '@react-navigation/native';
+import React,{useCallback,useRef,useState} from 'react';
 import {
   ActivityIndicator,
   Linking,
-  PermissionsAndroid,
-  Platform,
   StyleSheet,
   Text,
   TouchableOpacity,
@@ -22,14 +20,14 @@ import {
   useCameraPermission,
 } from 'react-native-vision-camera';
 
-import { useFaceRecognition } from '@/hooks/mutations/useFaceRecognition';
-import { Paths } from '@/navigation/paths';
+import {useFaceRecognition} from '@/hooks/mutations/useFaceRecognition';
+import {Paths} from '@/navigation/paths';
 
-import { PrimaryButton, TextLabel } from '@/components/atoms';
+import {PrimaryButton,TextLabel} from '@/components/atoms';
 
-import { colors } from '@/assets/theme';
-import { flashInfo } from '@/utils/flashMessageHelper';
-import { getCurrentPositionNative } from '@/utils/tracking';
+import {colors} from '@/assets/theme';
+import {flashInfo} from '@/utils/flashMessageHelper';
+import {getCurrentPositionNative,requestLocationPermission} from '@/utils/tracking';
 
 // 👇 NUEVO: util nativo
 
@@ -38,36 +36,18 @@ type Props = {
 };
 
 // --- Helpers de permisos/posición ---
-async function requestLocationPermission(): Promise<boolean> {
-  if (Platform.OS === 'ios') {
-    // Opcional: si quieres forzar el prompt de iOS (puedes invocarlo antes en otra pantalla)
-    // NativeModules.GeolocationModule?.requestPermissions?.();
-    return true; // iOS gestiona el prompt la primera vez; aquí no bloqueamos.
-  }
-  // Android
-  const fine = await PermissionsAndroid.request(
-    PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
-  );
-  const coarse = await PermissionsAndroid.request(
-    PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
-  );
 
-  return (
-    fine === PermissionsAndroid.RESULTS.GRANTED ||
-    coarse === PermissionsAndroid.RESULTS.GRANTED
-  );
-}
 
-const FaceCameraScreen = ({ navigation }: Props) => {
+const FaceCameraScreen = ({navigation}: Props) => {
   const isFocused = useIsFocused();
-  const { hasPermission, requestPermission } = useCameraPermission();
+  const {hasPermission,requestPermission} = useCameraPermission();
   const device = useCameraDevice('front');
   const cameraRef = useRef<CameraRefType>(null);
 
-  const [isTakingPhoto, setIsTakingPhoto] = useState(false);
-  const [isGettingLocation, setIsGettingLocation] = useState(false);
+  const [isTakingPhoto,setIsTakingPhoto] = useState(false);
+  const [isGettingLocation,setIsGettingLocation] = useState(false);
 
-  const { isPending, mutate: rekognition } = useFaceRecognition();
+  const {isPending,mutate: rekognition} = useFaceRecognition();
 
   const handleRequestPermission = useCallback(async () => {
     const granted = await requestPermission();
@@ -77,7 +57,7 @@ const FaceCameraScreen = ({ navigation }: Props) => {
         'Por favor habilita el acceso a la cámara desde Configuración.',
       );
     }
-  }, [requestPermission]);
+  },[requestPermission]);
 
   const handleTakePhoto = useCallback(async () => {
     if (!cameraRef.current || !device) {
@@ -140,23 +120,23 @@ const FaceCameraScreen = ({ navigation }: Props) => {
         {
           onError: (err: unknown) => {
             // eslint-disable-next-line no-console
-            console.error('Reconocimiento falló', err);
-            flashInfo('Error', 'No se pudo procesar el reconocimiento facial.');
+            console.error('Reconocimiento falló',err);
+            flashInfo('Error','No se pudo procesar el reconocimiento facial.');
           },
           onSuccess: () => {
-            navigation.replace(Paths.TabBarNavigation);
+            navigation.replace(Paths.SectorSelector);
           },
         },
       );
     } catch (error) {
       // eslint-disable-next-line no-console
-      console.error('Error al tomar la foto:', error);
+      console.error('Error al tomar la foto:',error);
       navigation.goBack();
     } finally {
       setIsGettingLocation(false);
       setIsTakingPhoto(false);
     }
-  }, [cameraRef, device, rekognition, navigation]);
+  },[cameraRef,device,rekognition,navigation]);
 
   if (!hasPermission) {
     return (
@@ -178,7 +158,7 @@ const FaceCameraScreen = ({ navigation }: Props) => {
   if (device == null) {
     return (
       <View style={styles.permissionContainer}>
-        <Text style={{ color: colors.white }}>
+        <Text style={{color: colors.white}}>
           No se detectó cámara frontal
         </Text>
       </View>
@@ -206,13 +186,13 @@ const FaceCameraScreen = ({ navigation }: Props) => {
         <TextLabel
           align="center"
           color={colors.white}
-          style={{ opacity: 0.6 }}
+          style={{opacity: 0.6}}
           type="R16"
         >
           Asegúrate de que esté bien iluminado.
         </TextLabel>
 
-        <View style={{ height: 24 }} />
+        <View style={{height: 24}} />
         {isBusy ? (
           <>
             <ActivityIndicator color={colors.white} />

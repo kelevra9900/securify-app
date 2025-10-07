@@ -160,7 +160,7 @@ describe('useTrackSocket',() => {
     api!.sendLocation(1.23,4.56,2000);
     api!.sendLocation(7.89,0.12,2000); // dentro del throttle -> ignorada
     expect(sock.emit).toHaveBeenCalledTimes(1);
-    expect(sock.emit).toHaveBeenCalledWith('new_location',{
+    expect(sock.emit).toHaveBeenCalledWith('save_location',{
       latitude: 1.23,
       longitude: 4.56,
     });
@@ -168,9 +168,42 @@ describe('useTrackSocket',() => {
     jest.advanceTimersByTime(2100);
     api!.sendLocation(7.89,0.12,2000);
     expect(sock.emit).toHaveBeenCalledTimes(2);
-    expect(sock.emit).toHaveBeenLastCalledWith('new_location',{
+    expect(sock.emit).toHaveBeenLastCalledWith('save_location',{
       latitude: 7.89,
       longitude: 0.12,
+    });
+
+    jest.useRealTimers();
+  });
+
+  test('sendRealtimeLocation usa update_location y throttle separado',async () => {
+    jest.useFakeTimers();
+    let api: null | ReturnType<typeof useTrackSocket> = null;
+    function Holder() {
+      api = useTrackSocket('token-5');
+      return null;
+    }
+    render(<Holder />);
+    const {createNamespaceSocket} = require('@/sockets/factory');
+    const sock = createNamespaceSocket('/tracker','token-5');
+
+    sock.emit.mockClear();
+
+    api!.sendRealtimeLocation(9.87,6.54,400);
+    api!.sendRealtimeLocation(1.23,4.56,400); // throttle -> ignorado
+
+    expect(sock.emit).toHaveBeenCalledTimes(1);
+    expect(sock.emit).toHaveBeenLastCalledWith('update_location',{
+      latitude: 9.87,
+      longitude: 6.54,
+    });
+
+    jest.advanceTimersByTime(500);
+    api!.sendRealtimeLocation(1.23,4.56,400);
+    expect(sock.emit).toHaveBeenCalledTimes(2);
+    expect(sock.emit).toHaveBeenLastCalledWith('update_location',{
+      latitude: 1.23,
+      longitude: 4.56,
     });
 
     jest.useRealTimers();

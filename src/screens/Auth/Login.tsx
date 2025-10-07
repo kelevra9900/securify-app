@@ -9,14 +9,18 @@ const LoginScreen = ({navigation}: RootScreenProps<Paths.Login>) => {
 
 	const handleTakePhoto = () => {
 		setStep('loading');
-		navigation.navigate(Paths.FaceCamera)
+		if (__DEV__) {
+			navigation.navigate(Paths.LoginWithCredentials)
+		} else {
+			navigation.navigate(Paths.FaceCamera)
+		}
 	};
 
 	return (
 		<LoginTemplate>
 			<LoginSteps
 				onCancel={() => setStep('welcome')}
-				onContinue={() => navigation.navigate(Paths.TabBarNavigation)}
+				onContinue={() => navigation.navigate(Paths.SectorSelector)}
 				onRetry={() => setStep('camera')}
 				onStart={() => setStep('camera')}
 				onTakePhoto={handleTakePhoto}

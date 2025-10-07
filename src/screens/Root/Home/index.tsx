@@ -1,7 +1,7 @@
-import type { NavigationProp } from '@react-navigation/native';
-import type { RootStackParamList } from '@/navigation/types';
+import type {NavigationProp} from '@react-navigation/native';
+import type {RootStackParamList} from '@/navigation/types';
 
-import { useNavigation } from '@react-navigation/native';
+import {useNavigation} from '@react-navigation/native';
 import React from 'react';
 import {
   ActivityIndicator,
@@ -11,10 +11,10 @@ import {
   View,
 } from 'react-native';
 
-import { useGetHomeData } from '@/hooks/home';
-import { Paths } from '@/navigation/paths';
+import {useGetHomeData} from '@/hooks/home';
+import {Paths} from '@/navigation/paths';
 
-import { CSafeAreaView } from '@/components/atoms';
+import {CSafeAreaView} from '@/components/atoms';
 import {
   AnnouncementsCard,
   CheckpointCard,
@@ -27,10 +27,10 @@ import {
   UserStatusCard,
 } from '@/components/molecules';
 
-import { darkTheme } from '@/assets/theme';
+import {darkTheme} from '@/assets/theme';
 
 const HomeScreen = () => {
-  const { data, isError, isPending, refetch } = useGetHomeData();
+  const {data,isError,isPending,refetch} = useGetHomeData();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   if (isPending) {
@@ -60,12 +60,12 @@ const HomeScreen = () => {
           justifyContent: 'center',
         }}
       >
-        <Text style={{ color: darkTheme.textPrimary, marginBottom: 12 }}>
+        <Text style={{color: darkTheme.textPrimary,marginBottom: 12}}>
           No pudimos cargar Home.
         </Text>
         <Text
           onPress={() => refetch()}
-          style={{ color: darkTheme.textPrimary }}
+          style={{color: darkTheme.textPrimary}}
         >
           Reintentar
         </Text>
@@ -76,7 +76,7 @@ const HomeScreen = () => {
   return (
     <CSafeAreaView
       edges={['top']}
-      style={{ backgroundColor: darkTheme.background }}
+      style={{backgroundColor: darkTheme.background}}
     >
       <ScrollView
         contentContainerStyle={styles.container}
@@ -99,6 +99,11 @@ const HomeScreen = () => {
             progressColor={data.environment.primaryColor}
           />
 
+          {data.shift?.remainingMinutes != null && data.shift.remainingMinutes <= 0 && (
+            <View style={styles.shiftEndedBanner}>
+              <Text style={styles.shiftEndedBannerText}>¡Fin de tu turno!</Text>
+            </View>
+          )}
           <TurnCountdownCard
             endsAtISO={data.shift?.endsAt ?? null}
             remainingMinutes={data.shift?.remainingMinutes ?? null}
@@ -128,7 +133,7 @@ const HomeScreen = () => {
             // timezone="America/Mazatlan" // opcional; usa la del dispositivo por defecto
             limit={3}
             onItemPress={(id) => {
-              navigation.navigate(Paths.Announcement, { id });
+              navigation.navigate(Paths.Announcement,{id});
             }}
             onSeeAll={() => {
               // navigation.navigate('AnnouncementsList')
@@ -152,6 +157,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 24,
     marginTop: 36,
+  },
+  shiftEndedBanner: {
+    backgroundColor: darkTheme.error,
+    borderRadius: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  shiftEndedBannerText: {
+    color: darkTheme.textPrimary,
+    fontSize: 16,
+    fontWeight: '700',
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,

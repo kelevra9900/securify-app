@@ -1,15 +1,13 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable no-console */
 // src/screens/RoundWalkScreen.tsx
-import type { RoundCheckpoint } from '@/types/rounds';
+import type {RoundCheckpoint} from '@/types/rounds';
 
-import { FlashList } from '@shopify/flash-list';
-import { MotiView } from 'moti';
-import React, { useCallback, useMemo, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {FlashList} from '@shopify/flash-list';
+import {MotiView} from 'moti';
+import React,{useCallback,useMemo,useState} from 'react';
+import {ActivityIndicator,StyleSheet,Text,View} from 'react-native';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import { useActiveRound } from '@/hooks/rounds';
+import {useActiveRound} from '@/hooks/rounds';
 
 import {
   CheckpointRow,
@@ -19,17 +17,17 @@ import {
   ScanModal,
 } from '@/components/atoms';
 
-import { darkTheme } from '@/assets/theme';
-import { scanCheckpointTag } from '@/utils/nfc';
-import { showErrorToast, showInfoToast } from '@/utils/toast';
-import { getCurrentPositionNative } from '@/utils/tracking';
+import {darkTheme} from '@/assets/theme';
+import {scanCheckpointTag} from '@/utils/nfc';
+import {showErrorToast,showInfoToast} from '@/utils/toast';
+import {getCurrentPositionNative} from '@/utils/tracking';
 
 const GEO_RADIUS_M = 30;
 
 export default function RoundWalkScreen() {
-  const { top } = useSafeAreaInsets();
-  const { data: active, isPending, refetch } = useActiveRound();
-  const [scanning, setScanning] = useState<{ cp: RoundCheckpoint } | null>(
+  const {top} = useSafeAreaInsets();
+  const {data: active,isPending,refetch} = useActiveRound();
+  const [scanning,setScanning] = useState<{cp: RoundCheckpoint} | null>(
     null,
   );
 
@@ -42,7 +40,7 @@ export default function RoundWalkScreen() {
       return undefined;
     }
     return active.data?.checkpoints.find((c) => !c.done);
-  }, [active?.data?.checkpoints]);
+  },[active?.data?.checkpoints]);
 
   const onScanFor = useCallback(async (cp: RoundCheckpoint) => {
     try {
@@ -60,25 +58,26 @@ export default function RoundWalkScreen() {
       if (dist > GEO_RADIUS_M) {
         // toast?.warn?.(`Acércate ${Math.max(1,Math.round(dist - GEO_RADIUS_M))} m para registrar`);
         showInfoToast(
-          `Acércate ${Math.max(1, Math.round(dist - GEO_RADIUS_M))} m para registrar`,
+          `Acércate ${Math.max(1,Math.round(dist - GEO_RADIUS_M))} m para registrar`,
         );
         return;
       }
 
       // 2) Abre modal escaneo
-      setScanning({ cp });
+      setScanning({cp});
 
       // 3) Lee NFC
       const tag = await scanCheckpointTag(10_000);
 
-      console.log('Tag information ====>', tag);
+      console.log('Tag information ====>',tag);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       // toast?.error?.(error?.message ?? 'Error al registrar');
       showErrorToast(error?.message ?? 'Error al registrar');
     } finally {
       setScanning(null);
     }
-  }, []);
+  },[]);
 
   if (isPending && !active) {
     return (
@@ -104,18 +103,18 @@ export default function RoundWalkScreen() {
   return (
     <CSafeAreaView
       edges={['top']}
-      style={{ backgroundColor: darkTheme.background, flex: 1 }}
+      style={{backgroundColor: darkTheme.background,flex: 1}}
     >
       <Header title={active.data?.name ?? ''} />
 
       {/* Header de progreso con Moti */}
       <MotiView
-        animate={{ opacity: 1, translateY: 0 }}
-        from={{ opacity: 0, translateY: -8 }}
-        style={[styles.headerBox, { marginTop: 8 + top }]}
-        transition={{ duration: 250, type: 'timing' }}
+        animate={{opacity: 1,translateY: 0}}
+        from={{opacity: 0,translateY: -8}}
+        style={[styles.headerBox,{marginTop: 8 + top}]}
+        transition={{duration: 250,type: 'timing'}}
       >
-        <View style={{ flex: 1 }}>
+        <View style={{flex: 1}}>
           <Text numberOfLines={1} style={styles.hTitle}>
             Ronda en curso
           </Text>
@@ -130,10 +129,9 @@ export default function RoundWalkScreen() {
       <FlashList
         contentContainerStyle={styles.list}
         data={active.data?.checkpoints}
-        estimatedItemSize={92}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        ItemSeparatorComponent={() => <View style={{height: 10}} />}
         keyExtractor={(c) => String(c.id)}
-        renderItem={({ item }) => (
+        renderItem={({item}) => (
           <CheckpointRow
             isNext={item.id === nextCheckpoint?.id}
             item={item}
@@ -167,7 +165,7 @@ function haversineMeters(
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const c = 2 * Math.atan2(Math.sqrt(a),Math.sqrt(1 - a));
   return R * c;
 }
 
@@ -192,15 +190,15 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 14,
   },
-  hMeta: { color: darkTheme.textSecondary, fontSize: 12, marginTop: 2 },
-  hTitle: { color: darkTheme.textPrimary, fontSize: 14, fontWeight: '700' },
+  hMeta: {color: darkTheme.textSecondary,fontSize: 12,marginTop: 2},
+  hTitle: {color: darkTheme.textPrimary,fontSize: 14,fontWeight: '700'},
   link: {
     color: darkTheme.highlight,
     marginTop: 8,
     textDecorationLine: 'underline',
   },
 
-  list: { padding: 16 },
+  list: {padding: 16},
 
-  text: { color: darkTheme.textPrimary, marginTop: 8 },
+  text: {color: darkTheme.textPrimary,marginTop: 8},
 });

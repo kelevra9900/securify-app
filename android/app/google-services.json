@@ -7,6 +7,25 @@
   "client": [
     {
       "client_info": {
+        "mobilesdk_app_id": "1:377790122603:android:84a0d54a51e4ec86617f2e",
+        "android_client_info": {
+          "package_name": "com.securify.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1eATqOj2Hqe65eUCOPIzVRqS8jOa0MFs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
         "mobilesdk_app_id": "1:377790122603:android:e0129c457b06296c617f2e",
         "android_client_info": {
           "package_name": "com.sissa.trablisa"

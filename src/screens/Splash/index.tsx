@@ -1,6 +1,6 @@
 import {useEffect} from "react";
-import {Image,StatusBar,StyleSheet,Text,View} from "react-native";
-import {MotiView} from "moti";
+import {Image,StatusBar,StyleSheet,View} from "react-native";
+import {MotiImage,MotiView} from "moti";
 
 import {Paths} from "@/navigation/paths";
 import type {RootScreenProps} from "@/navigation/types";
@@ -19,7 +19,7 @@ const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
 	useEffect(() => {
 		const timer = setTimeout(() => {
 			if (session.isAuthenticated) {
-				navigation.navigate(Paths.TabBarNavigation);
+				navigation.navigate(Paths.SectorSelector);
 			} else {
 				navigation.navigate(Paths.Login);
 			}
@@ -39,15 +39,19 @@ const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
 				style={styles.topImage}
 			/>
 
-			{/* Animated logo text */}
 			<MotiView
 				animate={{opacity: 1,scale: 1}}
 				from={{opacity: 0,scale: 0.9}}
-				transition={{duration: 800,type: 'timing'}}
+				transition={{duration: 600,type: 'timing'}}
 			>
-				<Text style={[styles.text,{color: theme.textPrimary}]}>
-					SPHERE
-				</Text>
+				<MotiImage
+					animate={{translateY: -8}}
+					from={{translateY: 8}}
+					resizeMode="contain"
+					source={require('@/assets/images/logo.png')}
+					style={styles.logo}
+					transition={{duration: 1200,loop: true,type: 'timing'}}
+				/>
 			</MotiView>
 
 		</View>
@@ -70,6 +74,10 @@ const styles = StyleSheet.create({
 		flex: 1,
 		justifyContent: 'center',
 		position: 'relative',
+	},
+	logo: {
+		height: getWidth(192),
+		width: getWidth(192),
 	},
 	text: {
 		fontSize: 32,

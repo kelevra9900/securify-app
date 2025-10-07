@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { NativeModules, PermissionsAndroid, Platform } from 'react-native';
+import {NativeModules,PermissionsAndroid,Platform} from 'react-native';
 
 import {
   isIgnoringDozeWhitelist,
@@ -12,7 +12,7 @@ import {
   updateTracking,
 } from '@/utils/tracking';
 
-describe('utils/tracking', () => {
+describe('utils/tracking',() => {
   const originalOS = Platform.OS;
   const originalVersion = Platform.Version;
 
@@ -20,14 +20,14 @@ describe('utils/tracking', () => {
     (Platform as any).OS = 'android';
     (Platform as any).Version = 33;
     (NativeModules as any).TrackingModule = {
-      saveAuth: jest.fn().mockResolvedValue(undefined),
-      start: jest.fn().mockResolvedValue(undefined),
-      stop: jest.fn().mockResolvedValue(undefined),
-      update: jest.fn().mockResolvedValue(undefined),
       isIgnoringBatteryOptimizations: jest.fn().mockResolvedValue(true),
       openBatteryOptimizationSettings: jest.fn(),
       requestIgnoreBatteryOptimizations: jest.fn(),
       requestPermissions: jest.fn(),
+      saveAuth: jest.fn().mockResolvedValue(undefined),
+      start: jest.fn().mockResolvedValue(undefined),
+      stop: jest.fn().mockResolvedValue(undefined),
+      update: jest.fn().mockResolvedValue(undefined),
     };
   });
 
@@ -37,14 +37,14 @@ describe('utils/tracking', () => {
     (Platform as any).Version = originalVersion as any;
   });
 
-  test('startTracking -> missing_auth', async () => {
+  test('startTracking -> missing_auth',async () => {
     const res = await startTracking({} as any);
-    expect(res).toEqual({ ok: false, reason: 'missing_auth' });
+    expect(res).toEqual({ok: false,reason: 'missing_auth'});
   });
 
-  test('startTracking (android) guarda auth y arranca con defaults', async () => {
+  test('startTracking (android) guarda auth y arranca con defaults',async () => {
     jest
-      .spyOn(PermissionsAndroid, 'request')
+      .spyOn(PermissionsAndroid,'request')
       .mockImplementation(async (perm: any) => {
         if (
           perm === PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION ||
@@ -61,83 +61,93 @@ describe('utils/tracking', () => {
       socketUrl: 'https://sock',
       token: 'abc',
     } as any);
-    expect(res).toEqual({ ok: true });
+    expect(res).toEqual({ok: true});
 
     const mod = (NativeModules as any).TrackingModule;
-    expect(mod.saveAuth).toHaveBeenCalledWith('abc', 'https://sock');
+    expect(mod.saveAuth).toHaveBeenCalledWith(
+      'abc',
+      'https://sock',
+      'save_location',
+      '/tracker',
+    );
     expect(mod.start).toHaveBeenCalledWith(
       expect.objectContaining({
         fastestMs: 5000,
-        intervalMs: 10000,
+        intervalMs: 10_000,
         minDistanceMeters: 5,
         namespace: '/tracker',
+        realtimeEvent: 'update_location',
+        realtimeMinDistanceMeters: 1,
         socketUrl: 'https://sock',
         token: 'abc',
       }),
     );
   });
 
-  test('startTracking (ios) usa eventName y opciones iOS', async () => {
+  test('startTracking (ios) usa eventName y opciones iOS',async () => {
     (Platform as any).OS = 'ios';
 
     const res = await startTracking({
       socketUrl: 'https://sock',
       token: 'abc',
     } as any);
-    expect(res).toEqual({ ok: true });
+    expect(res).toEqual({ok: true});
 
     const mod = (NativeModules as any).TrackingModule;
     expect(mod.saveAuth).toHaveBeenCalledWith(
       'abc',
       'https://sock',
-      'new_location',
+      'save_location',
     );
     expect(mod.start).toHaveBeenCalledWith(
       expect.objectContaining({
         activityType: 'fitness',
         minDistanceMeters: 5,
         namespace: '/tracker',
+        realtimeEvent: 'update_location',
         throttleMs: 1500,
       }),
     );
   });
 
-  test('updateTracking normaliza namespace y aplica campos', () => {
+  test('updateTracking normaliza namespace y aplica campos',() => {
     updateTracking({
-      namespace: 'my-ns',
-      minDistanceMeters: 10,
       fastestMs: 1000,
       intervalMs: 2000,
+      minDistanceMeters: 10,
+      namespace: 'my-ns',
+      realtimeMinDistanceMeters: 1.5,
     });
     const mod = (NativeModules as any).TrackingModule;
     expect(mod.update).toHaveBeenCalledWith(
       expect.objectContaining({
-        namespace: '/my-ns',
-        minDistanceMeters: 10,
         fastestMs: 1000,
         intervalMs: 2000,
+        minDistanceMeters: 10,
+        namespace: '/my-ns',
+        realtimeMinDistanceMeters: 1.5,
       }),
     );
   });
 
-  test('stopTracking invoca stop', () => {
+  test('stopTracking invoca stop',() => {
     stopTracking();
     const mod = (NativeModules as any).TrackingModule;
     expect(mod.stop).toHaveBeenCalled();
   });
 
-  test('setTrackingAuth (android) y (ios) usan firmas correctas', () => {
+  test('setTrackingAuth (android) y (ios) usan firmas correctas',() => {
     const mod = (NativeModules as any).TrackingModule;
-    setTrackingAuth('t', 'u');
-    expect(mod.saveAuth).toHaveBeenCalledWith('t', 'u');
+    setTrackingAuth('t','u');
+    expect(mod.saveAuth).toHaveBeenCalledWith('t','u','save_location','/tracker');
 
     (Platform as any).OS = 'ios';
     mod.saveAuth.mockClear();
-    setTrackingAuth('t', 'u');
-    expect(mod.saveAuth).toHaveBeenCalledWith('t', 'u', 'new_location');
+    setTrackingAuth('t','u');
+    expect(mod.saveAuth).toHaveBeenCalledWith('t','u','save_location');
   });
 
-  test('isIgnoringDozeWhitelist: iOS => true, Android delega y captura errores', async () => {
+  test('isIgnoringDozeWhitelist: iOS => true, Android delega y captura errores',async () => {
     (Platform as any).OS = 'ios';
     await expect(isIgnoringDozeWhitelist()).resolves.toBe(true);
 
@@ -159,19 +169,19 @@ describe('utils/tracking', () => {
     await expect(isIgnoringDozeWhitelist()).resolves.toBe(false);
   });
 
-  test('openBatteryOptimizationSettings y requestIgnoreDozeWhitelist solo en Android', () => {
+  test('openBatteryOptimizationSettings y requestIgnoreDozeWhitelist solo en Android',() => {
     const mod = (NativeModules as any).TrackingModule;
     openBatteryOptimizationSettings();
     expect(mod.openBatteryOptimizationSettings).toHaveBeenCalled();
   });
 
-  test('requestAllLocationPermissions maneja flujos Android/iOS', async () => {
+  test('requestAllLocationPermissions maneja flujos Android/iOS',async () => {
     // Android: denegado foreground => detalle
     jest
-      .spyOn(PermissionsAndroid, 'request')
+      .spyOn(PermissionsAndroid,'request')
       .mockResolvedValueOnce('denied' as any);
     const a1 = await requestAllLocationPermissions();
-    expect(a1).toEqual({ ok: false, reason: 'denied' });
+    expect(a1).toEqual({ok: false,reason: 'denied'});
 
     // Android: todo ok
     (PermissionsAndroid.request as any).mockImplementation(
@@ -188,15 +198,15 @@ describe('utils/tracking', () => {
       },
     );
     const a2 = await requestAllLocationPermissions();
-    expect(a2).toEqual({ ok: true });
+    expect(a2).toEqual({ok: true});
 
     // iOS: siempre ok (método es stub)
     (Platform as any).OS = 'ios';
     const a3 = await requestAllLocationPermissions();
-    expect(a3).toEqual({ ok: true });
+    expect(a3).toEqual({ok: true});
   });
 
-  test('requestIOSLocationPromptsNow solo en iOS', () => {
+  test('requestIOSLocationPromptsNow solo en iOS',() => {
     const mod = (NativeModules as any).TrackingModule;
     (Platform as any).OS = 'android';
     requestIOSLocationPromptsNow();
@@ -207,7 +217,7 @@ describe('utils/tracking', () => {
     expect(mod.requestPermissions).toHaveBeenCalled();
   });
 
-  test('getCurrentPositionNative delega al bridge y valida permisos Android', async () => {
+  test('getCurrentPositionNative delega al bridge y valida permisos Android',async () => {
     const geo = {
       getCurrentPosition: jest
         .fn()
@@ -221,12 +231,12 @@ describe('utils/tracking', () => {
     (NativeModules as any).GeolocationModule = geo;
 
     jest
-      .spyOn(PermissionsAndroid, 'request')
+      .spyOn(PermissionsAndroid,'request')
       .mockResolvedValue(PermissionsAndroid.RESULTS.GRANTED as any);
 
     // Reimporta el módulo con el mock ya colocado (debido a destructuring en módulo)
     jest.isolateModules(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+
       const m = require('@/utils/tracking');
       const p = await m.getCurrentPositionNative();
       expect(p.latitude).toBe(1);

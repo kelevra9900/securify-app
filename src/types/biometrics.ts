@@ -19,6 +19,7 @@ export interface BiometricsOk {
 	jwt: string;
 	matched: true;
 	message: string;
+	refreshToken: string;
 	role: Role | string;
 	user: BiometricsUser;
 }

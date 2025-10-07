@@ -17,6 +17,7 @@ export function useTrackSocket(token: null | string) {
 
 	const [connected,setConnected] = useState<boolean>(false);
 	const lastEmitRef = useRef<number>(0);
+	const lastRealtimeEmitRef = useRef<number>(0);
 
 	// Diagnóstico y ciclo de vida
 	useEffect(() => {
@@ -73,8 +74,23 @@ export function useTrackSocket(token: null | string) {
 		lastEmitRef.current = now;
 
 		const payload: LocationPayload = {latitude,longitude};
-		socket.emit("new_location",payload);
+		console.log("Send location to historical",payload)
+		socket.emit("save_location",payload);
 	}
 
-	return {connected,sendLocation,socket};
+	function sendRealtimeLocation(
+		latitude: number,
+		longitude: number,
+		minIntervalMs = 500,
+	) {
+		if (!socket || !connected) {return;}
+		const now = Date.now();
+		if (now - lastRealtimeEmitRef.current < minIntervalMs) {return;}
+		lastRealtimeEmitRef.current = now;
+
+		const payload: LocationPayload = {latitude,longitude};
+		socket.emit("update_location",payload);
+	}
+
+	return {connected,sendLocation,sendRealtimeLocation,socket};
 }

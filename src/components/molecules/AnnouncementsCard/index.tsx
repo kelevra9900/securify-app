@@ -1,6 +1,6 @@
 // components/molecules/AnnouncementsCard.tsx
 import React,{useMemo} from 'react';
-import {Image,Pressable,StyleSheet,Text,View} from 'react-native';
+import {Image,Pressable,StyleSheet,Text,TouchableOpacity,View} from 'react-native';
 import {Megaphone} from 'lucide-react-native';
 import {MotiView} from 'moti';
 import {DateTime} from 'luxon';
@@ -75,26 +75,28 @@ const AnnouncementsCard: React.FC<Props> = ({
 							style={styles.itemWrap}
 							transition={{delay: idx * 80,duration: 280,type: 'timing'}}
 						>
-							<Row
-								accessibilityRole={onItemPress ? 'button' : 'summary'}
-								onPress={onItemPress ? () => onItemPress(a.id) : undefined}
-								style={styles.item}
-							>
-								{a.image ? (
-									<Image source={{uri: a.image}} style={styles.thumb} />
-								) : (
-									<View style={[styles.thumb,{backgroundColor: theme.border}]} />
-								)}
+							<TouchableOpacity onPress={onItemPress ? () => onItemPress(a.id) : undefined}>
+								<Row
+									accessibilityRole={onItemPress ? 'button' : 'summary'}
 
-								<View style={styles.content}>
-									<Text numberOfLines={2} style={[styles.message,{color: theme.textPrimary}]}>
-										{a.title}
-									</Text>
-									<Text style={[styles.meta,{color: theme.textSecondary}]}>
-										{rel} ({tz})
-									</Text>
-								</View>
-							</Row>
+									style={styles.item}
+								>
+									{a.image ? (
+										<Image source={{uri: a.image}} style={styles.thumb} />
+									) : (
+										<View style={[styles.thumb,{backgroundColor: theme.border}]} />
+									)}
+
+									<View style={styles.content}>
+										<Text numberOfLines={2} style={[styles.message,{color: theme.textPrimary}]}>
+											{a.title}
+										</Text>
+										<Text style={[styles.meta,{color: theme.textSecondary}]}>
+											{rel} ({tz})
+										</Text>
+									</View>
+								</Row>
+							</TouchableOpacity>
 						</MotiView>
 					);
 				})

@@ -3,7 +3,8 @@ import {createSlice} from '@reduxjs/toolkit';
 
 const initialState = {
 	isAuthenticated: false,
-	token: null as null | string,
+	refreshToken: null as null | string,
+	token: null as null | string
 }
 
 const authSlice = createSlice({
@@ -13,9 +14,11 @@ const authSlice = createSlice({
 		clearCredentials: (state) => {
 			state.token = null;
 			state.isAuthenticated = false;
+			state.refreshToken = null
 		},
-		setCredentials: (state,action: PayloadAction<{token: string}>) => {
+		setCredentials: (state,action: PayloadAction<{refreshToken: string; token: string,}>) => {
 			state.token = action.payload.token;
+			state.refreshToken = action.payload.refreshToken;
 			state.isAuthenticated = true;
 		},
 	},

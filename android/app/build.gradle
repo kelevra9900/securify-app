@@ -1,4 +1,6 @@
 apply plugin: "com.android.application"
+apply plugin: 'com.google.gms.google-services'
+apply plugin: 'com.google.firebase.appdistribution'
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
@@ -80,13 +82,13 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.trablisarn"
+    namespace "com.securify.app"
     defaultConfig {
-        applicationId "com.trablisarn"
+        applicationId "com.securify.app"
         minSdk = rootProject.ext.minSdkVersion
         targetSdk = rootProject.ext.targetSdkVersion
-        versionCode = 1
-        versionName = "1.0.0-beta"
+        versionCode = 5
+        versionName = "1.0.3-beta"
     }
     signingConfigs {
         debug {
@@ -120,7 +122,7 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
-    implementation "com.google.android.gms:play-services-location:21.3.0"
+    implementation('com.google.android.gms:play-services-location:21.0.1')    
     implementation("io.socket:socket.io-client:2.1.0") {
         exclude group: 'org.json', module: 'json'
     }

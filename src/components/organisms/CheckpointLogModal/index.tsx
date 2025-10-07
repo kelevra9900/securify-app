@@ -1,8 +1,8 @@
-import { Clock, MapPin, User } from 'lucide-react-native';
+import {Clock,MapPin,User} from 'lucide-react-native';
 import React from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {Modal,StyleSheet,Text,TouchableOpacity,View} from 'react-native';
 
-import { useTheme } from '@/context/Theme';
+import {useTheme} from '@/context/Theme';
 
 type Props = {
   data: {
@@ -16,25 +16,25 @@ type Props = {
 };
 
 const statusDetails = {
-  completed: { color: '#4CAF50', label: 'Completado' },
-  pending: { color: '#FFC107', label: 'Pendiente' },
-  skipped: { color: '#F44336', label: 'Omitido' },
+  completed: {color: '#4CAF50',label: 'Completado'},
+  pending: {color: '#FFC107',label: 'Pendiente'},
+  skipped: {color: '#F44336',label: 'Omitido'},
 };
 
-const CheckpointLogModal = ({ data, onClose, visible }: Props) => {
-  const { theme } = useTheme();
-  const { checkpointName, guardName, status, timestamp } = data;
+const CheckpointLogModal = ({data,onClose,visible}: Props) => {
+  const {theme} = useTheme();
+  const {checkpointName,guardName,status,timestamp} = data;
 
   return (
-    <Modal visible={visible} style={styles.modalContainer}>
-      <View style={[styles.modal, { backgroundColor: theme.cardBackground }]}>
-        <Text style={[styles.title, { color: theme.textPrimary }]}>
+    <Modal style={styles.modalContainer} visible={visible}>
+      <View style={[styles.modal,{backgroundColor: theme.cardBackground}]}>
+        <Text style={[styles.title,{color: theme.textPrimary}]}>
           Detalle del Checkpoint
         </Text>
 
         <View style={styles.row}>
           <MapPin color={theme.textSecondary} size={20} />
-          <Text style={[styles.text, { color: theme.textPrimary }]}>
+          <Text style={[styles.text,{color: theme.textPrimary}]}>
             {checkpointName}
           </Text>
         </View>
@@ -42,7 +42,7 @@ const CheckpointLogModal = ({ data, onClose, visible }: Props) => {
         {guardName && (
           <View style={styles.row}>
             <User color={theme.textSecondary} size={20} />
-            <Text style={[styles.text, { color: theme.textPrimary }]}>
+            <Text style={[styles.text,{color: theme.textPrimary}]}>
               {guardName}
             </Text>
           </View>
@@ -50,7 +50,7 @@ const CheckpointLogModal = ({ data, onClose, visible }: Props) => {
 
         <View style={styles.row}>
           <Clock color={theme.textSecondary} size={20} />
-          <Text style={[styles.text, { color: theme.textPrimary }]}>
+          <Text style={[styles.text,{color: theme.textPrimary}]}>
             {timestamp
               ? new Date(timestamp).toLocaleTimeString()
               : 'Sin hora registrada'}
@@ -61,10 +61,10 @@ const CheckpointLogModal = ({ data, onClose, visible }: Props) => {
           <View
             style={[
               styles.statusIndicator,
-              { backgroundColor: statusDetails[status].color },
+              {backgroundColor: statusDetails[status].color},
             ]}
           />
-          <Text style={[styles.text, { color: theme.textPrimary }]}>
+          <Text style={[styles.text,{color: theme.textPrimary}]}>
             {statusDetails[status].label}
           </Text>
         </View>

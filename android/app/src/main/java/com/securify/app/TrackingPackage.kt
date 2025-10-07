@@ -1,4 +1,4 @@
-package com.trablisarn
+package com.securify.app
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule
