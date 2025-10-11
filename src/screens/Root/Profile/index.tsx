@@ -22,7 +22,6 @@ import {
   View,
 } from 'react-native';
 
-import {useAppDispatch} from '@/hooks/store';
 import {useGetCurrentUser} from '@/hooks/user/current_user';
 import {Paths} from '@/navigation/paths';
 
@@ -31,10 +30,6 @@ import {SkeletonBox,SkeletonCircle} from '@/components/atoms/Skeleton';
 
 import {darkTheme} from '@/assets/theme';
 import {useTheme} from '@/context/Theme';
-import {disposeChatSocket} from '@/lib/socket/chat';
-import {clearCredentials} from '@/store/reducers/auth';
-import {clearProfile} from '@/store/reducers/user';
-import {stopTracking} from '@/utils/tracking';
 
 // --- Helpers ---
 const AVATAR = 100;
@@ -59,7 +54,6 @@ const ProfileScreen = () => {
     refetch,
   } = useGetCurrentUser();
   const {theme} = useTheme();
-  const dispatch = useAppDispatch();
   const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 
   const fullName = useMemo(
@@ -89,11 +83,7 @@ const ProfileScreen = () => {
       icon: LogOut,
       label: 'Cerrar sesión',
       onPress: () => {
-        dispatch(clearCredentials());
-        dispatch(clearProfile());
-        navigation.navigate(Paths.Login);
-        stopTracking();
-        disposeChatSocket();
+        navigation.navigate(Paths.FaceCameraLogout);
       },
     },
   ];

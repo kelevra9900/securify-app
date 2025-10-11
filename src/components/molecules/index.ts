@@ -1,3 +1,4 @@
+export {default as AnnouncementItem} from './AnnouncementItem';
 export {default as AnnouncementsCard} from './AnnouncementsCard';
 export {default as CheckpointCard} from './CheckpointCard';
 export {default as CheckpointList} from './CheckpointList';

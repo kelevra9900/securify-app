@@ -130,13 +130,12 @@ const HomeScreen = () => {
           />
           <AnnouncementsCard
             items={data.announcements}
-            // timezone="America/Mazatlan" // opcional; usa la del dispositivo por defecto
             limit={3}
             onItemPress={(id) => {
               navigation.navigate(Paths.Announcement,{id});
             }}
             onSeeAll={() => {
-              // navigation.navigate('AnnouncementsList')
+              navigation.navigate(Paths.AnnouncementsList)
             }}
           />
         </View>

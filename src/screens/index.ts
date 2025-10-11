@@ -1,3 +1,4 @@
+export {default as AnnouncementsListScreen} from './Announcements'
 export {default as AnnouncementScreen} from './Announcements/details';
 export {default as AttendancesScreen} from './Attendances';
 export {default as LoginScreen} from './Auth/Login';
@@ -5,6 +6,7 @@ export {default as LoginWithCredentials} from './Auth/LoginWithCredentials'
 export {default as ControlScreen} from './Control'
 export {default as DocumentsScreen} from './Documents';
 export {default as FaceCameraScreen} from './FaceCamera';
+export {default as LogoutScreen} from './FaceCamera/logout'
 export {default as NotificationsScreen} from './Notifications';
 export {default as ChatDetailScreen} from './Root/Chat/detail';
 export {default as CreateReportScreen} from './Root/Reports/create';

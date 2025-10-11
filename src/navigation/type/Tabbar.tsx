@@ -37,6 +37,10 @@ import {
 } from '@/utils/tracking';
 
 import {Paths} from '../paths';
+import {useCreateAlert} from '@/hooks/alerts/useCreateAlert';
+import type {FormValues} from '@/screens/Root/Reports/create';
+import {tryGetCurrentLatLng} from '@/utils/location';
+import {showToast} from '@/utils/toast';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -156,9 +160,40 @@ const CustomTabBar = ({
 export default function TabNavigation() {
   const {theme} = useTheme();
   const token = useSelector((state: RootState) => state.auth.token);
-  const {triggerSOS} = usePanicFAB(token);
+  const {isPending,mutateAsync} = useCreateAlert();
+  const envId = useSelector((s: RootState) => s.profile.environment?.id) as
+    | number
+    | undefined;
   const startedRef = useRef(false);
   const lastTokenRef = useRef<null | string>(null);
+
+  const onSubmit = async () => {
+    const loc = await tryGetCurrentLatLng().catch(() => null);
+    await mutateAsync(
+      {
+        description: 'S.O.S',
+        environmentId: envId,
+        latitude: loc?.latitude,
+        longitude: loc?.longitude,
+        title: 'S.O.S',
+      },
+      {
+        onError: (error) => {
+          showToast({
+            title: 'Error al crear la alerta',
+            variant: 'error',
+          });
+        },
+        onSuccess: (data) => {
+          showToast({
+            description: 'Alerta creada correctamente',
+            title: 'Listo',
+            variant: 'success',
+          });
+        },
+      },
+    );
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -252,7 +287,11 @@ export default function TabNavigation() {
           />
         ))}
       </Tab.Navigator>
-      <PanicFAB onPress={triggerSOS} />
+      <PanicFAB
+        loading={isPending}
+        onPress={() => {
+          onSubmit()
+        }} />
     </CSafeAreaView>
   );
 }

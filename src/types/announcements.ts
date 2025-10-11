@@ -12,7 +12,7 @@ export type ApiEnvelope<T> = {
 
 /** Shape “crudo” que viene del backend (snake/camel mixto) */
 export type AnnouncementDetailServer = {
-  author?: { id: number; name: string } | null;
+  author?: {id: number; name: string} | null;
   content: string;
   createdAt: string; // ISO
   environmentName?: null | string;
@@ -25,10 +25,11 @@ export type AnnouncementDetailServer = {
 
 /** Shape listo para UI (camelCase) */
 export type AnnouncementDetail = {
-  author?: { id: number; name: string } | null;
+  author?: {id: number; name: string} | null;
   content: string;
   createdAtISO: string;
   environmentName?: null | string;
+  excerpt?: string;
   id: number;
   image?: null | string;
   isApproved: boolean;
@@ -48,31 +49,34 @@ export type PageMeta = {
   total: number;
 };
 
-/** Item de lista (puedes ajustarlo a lo que devuelva tu endpoint de listado) */
-export type AnnouncementListItemServer = {
-  createdAt: string; // ISO
-  environmentName?: null | string;
-  excerpt?: null | string; // opcional si tu API lo expone
-  id: number;
-  image?: null | string;
-  is_approved?: boolean | null;
-  title: string;
-};
-
 export type AnnouncementListItem = {
-  createdAtISO: string;
+  author?: {id: number; name: string} | null;
+  content?: string;
+  createdAt: string;
+  environmentId?: null | number;
   environmentName?: null | string;
   excerpt?: null | string;
   id: number;
   image?: null | string;
+  is_approved?: boolean
   isApproved: boolean;
   title: string;
+  updatedAt: string;
 };
 
-export type AnnouncementListResponse = ApiEnvelope<{
-  items: AnnouncementListItemServer[];
-  meta: PageMeta;
-}>;
+export type AnnouncementListMeta = {
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  page: number;
+  perPage: number;
+  total: number;
+  totalPages: number;
+};
+
+export type AnnouncementListResponse = {
+  data: AnnouncementListItem[];
+  meta: AnnouncementListMeta;
+};
 
 /* ───────────────────────────── Type guards (opcionales) ───────────────────────────── */
 
@@ -97,12 +101,7 @@ export function isAnnouncementListResponse(
     return false;
   }
   const r = x as any;
-  return (
-    r.ok === true &&
-    typeof r.serverTimeISO === 'string' &&
-    Array.isArray(r.data?.items) &&
-    typeof r.data?.meta?.page === 'number'
-  );
+  return Array.isArray(r.data) && typeof r.meta?.page === 'number';
 }
 
 /* ───────────────────────────── Mappers a camelCase ───────────────────────────── */
@@ -124,15 +123,21 @@ export function mapAnnouncementDetail(
 }
 
 export function mapAnnouncementListItem(
-  s: AnnouncementListItemServer,
+  s: AnnouncementListItem,
 ): AnnouncementListItem {
+  const fallbackContent = s.content ?? '';
+  const excerpt = s.excerpt || null;
   return {
-    createdAtISO: s.createdAt,
+    author: s.author ?? null,
+    content: fallbackContent || undefined,
+    createdAt: s.createdAt,
+    environmentId: s.environmentId ?? null,
     environmentName: s.environmentName ?? null,
-    excerpt: s.excerpt ?? null,
+    excerpt,
     id: s.id,
     image: s.image ?? null,
     isApproved: Boolean(s.is_approved),
     title: s.title,
+    updatedAt: s.updatedAt ?? s.createdAt,
   };
 }

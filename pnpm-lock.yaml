@@ -11,6 +11,9 @@ importers:
       '@react-native-async-storage/async-storage':
         specifier: ^2.2.0
         version: 2.2.0(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))
+      '@react-native-community/blur':
+        specifier: ^4.4.1
+        version: 4.4.1(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))(react@19.1.0)
       '@react-native-community/netinfo':
         specifier: ^11.4.1
         version: 11.4.1(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))
@@ -89,6 +92,9 @@ importers:
       react-native-image-picker:
         specifier: ^8.2.1
         version: 8.2.1(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))(react@19.1.0)
+      react-native-linear-gradient:
+        specifier: ^2.8.3
+        version: 2.8.3(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))(react@19.1.0)
       react-native-localize:
         specifier: ^3.5.1
         version: 3.5.2(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))(react@19.1.0)
@@ -1414,6 +1420,12 @@ packages:
     resolution: {integrity: sha512-gvRvjR5JAaUZF8tv2Kcq/Gbt3JHwbKFYfmb445rhOj6NUMx3qPLixmDx5pZAyb9at1bYvJ4/eTUipU5aki45xw==}
     peerDependencies:
       react-native: ^0.0.0-0 || >=0.65 <1.0
+
+  '@react-native-community/blur@4.4.1':
+    resolution: {integrity: sha512-XBSsRiYxE/MOEln2ayunShfJtWztHwUxLFcSL20o+HNNRnuUDv+GXkF6FmM2zE8ZUfrnhQ/zeTqvnuDPGw6O8A==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
 
   '@react-native-community/cli-clean@20.0.1':
     resolution: {integrity: sha512-/4Q28dDz9k++cbTSDiEQ+i2n4XlRy1keXi8VIpGVTRxAuxX+KNtNlCk5MnmPoiOZDvaRRc7xTUebUCMC03HFeQ==}
@@ -4364,6 +4376,12 @@ packages:
       react: '*'
       react-native: '*'
 
+  react-native-linear-gradient@2.8.3:
+    resolution: {integrity: sha512-KflAXZcEg54PXkLyflaSZQ3PJp4uC4whM7nT/Uot9m0e/qxFV3p6uor1983D1YOBJbJN7rrWdqIjq0T42jOJyA==}
+    peerDependencies:
+      react: '*'
+      react-native: '*'
+
   react-native-localize@3.5.2:
     resolution: {integrity: sha512-HfQdwv5sRjh4AQ8a97OTjXYcxPNRlBxiQb861c7Ob6mRuNYCPtaJ45QTcZxZr31vAM3THvtOBp1soqWlQFxjnA==}
     peerDependencies:
@@ -6772,6 +6790,11 @@ snapshots:
   '@react-native-async-storage/async-storage@2.2.0(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))':
     dependencies:
       merge-options: 3.0.4
+      react-native: 0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0)
+
+  '@react-native-community/blur@4.4.1(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))(react@19.1.0)':
+    dependencies:
+      react: 19.1.0
       react-native: 0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0)
 
   '@react-native-community/cli-clean@20.0.1':
@@ -10501,6 +10524,11 @@ snapshots:
       react-native: 0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0)
 
   react-native-is-edge-to-edge@1.2.1(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))(react@19.1.0):
+    dependencies:
+      react: 19.1.0
+      react-native: 0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0)
+
+  react-native-linear-gradient@2.8.3(react-native@0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0))(react@19.1.0):
     dependencies:
       react: 19.1.0
       react-native: 0.81.1(@babel/core@7.28.4)(@react-native-community/cli@20.0.1(typescript@5.8.3))(@react-native/metro-config@0.81.0(@babel/core@7.28.4))(@types/react@19.2.0)(react@19.1.0)

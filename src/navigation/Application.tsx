@@ -9,6 +9,7 @@ import {
   ActiveRound,
   AlertDetailScreen,
   AnnouncementScreen,
+  AnnouncementsListScreen,
   AttendancesScreen,
   ChatDetailScreen,
   ControlScreen,
@@ -18,6 +19,7 @@ import {
   ListRounds,
   LoginScreen,
   LoginWithCredentials,
+  LogoutScreen,
   NotificationsScreen,
   PreviewRound,
   RoundWalkScreen,
@@ -45,10 +47,12 @@ function ApplicationNavigator() {
               screenOptions={{headerShown: false}}
             >
               <Stack.Screen component={SplashScreen} name={Paths.Splash} />
+              <Stack.Screen component={AnnouncementsListScreen} name={Paths.AnnouncementsList} />
               <Stack.Screen component={LoginScreen} name={Paths.Login} />
               <Stack.Screen component={SectorSelector} name={Paths.SectorSelector} />
               <Stack.Screen component={ControlScreen} name={Paths.Control} />
               <Stack.Screen component={LoginWithCredentials} name={Paths.LoginWithCredentials} />
+              <Stack.Screen component={LogoutScreen} name={Paths.FaceCameraLogout} />
               <Stack.Screen
                 component={TabBarNavigation}
                 name={Paths.TabBarNavigation}

@@ -11,6 +11,7 @@ export type RootStackParamList = {
   [Paths.Announcement]: {
     id: number;
   };
+  [Paths.AnnouncementsList]: undefined;
   [Paths.Attendances]: undefined;
   [Paths.Chat]: undefined;
   [Paths.ChatDetail]: {
@@ -21,6 +22,7 @@ export type RootStackParamList = {
   [Paths.CreateReport]: undefined;
   [Paths.Documents]: undefined;
   [Paths.FaceCamera]: undefined;
+  [Paths.FaceCameraLogout]: undefined;
   [Paths.Home]: undefined;
   [Paths.Login]: undefined;
   [Paths.LoginWithCredentials]: undefined;

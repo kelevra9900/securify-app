@@ -1,10 +1,11 @@
-import { MotiView } from 'moti';
+import {MotiView} from 'moti';
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {ActivityIndicator,StyleSheet,Text,TouchableOpacity,View} from 'react-native';
 
-import { moderateScale } from '@/constants';
+import {moderateScale} from '@/constants';
 
 type Props = {
+  loading?: boolean
   onPress: () => void;
 };
 
@@ -12,33 +13,38 @@ const SIZE = 70;
 const WRAP = SIZE * 2;
 const HALF = SIZE / 2; // para centrar los ripples en el wrapper
 
-const PanicFAB = ({ onPress }: Props) => {
+const PanicFAB = ({loading = false,onPress}: Props) => {
   return (
     <View pointerEvents="box-none" style={styles.wrapper}>
       <MotiView
-        animate={{ opacity: 0, scale: 2 }}
-        from={{ opacity: 1, scale: 1 }}
+        animate={{opacity: 0,scale: 2}}
+        from={{opacity: 1,scale: 1}}
         pointerEvents="none"
         style={styles.ripple}
-        transition={{ duration: 1500, loop: true, type: 'timing' }}
+        transition={{duration: 1500,loop: true,type: 'timing'}}
       />
 
       <MotiView
-        animate={{ opacity: 0, scale: 2.5 }}
-        from={{ opacity: 1, scale: 1 }}
+        animate={{opacity: 0,scale: 2.5}}
+        from={{opacity: 1,scale: 1}}
         pointerEvents="none"
-        style={[styles.ripple, styles.rippleSecondary]}
-        transition={{ delay: 500, duration: 2000, loop: true, type: 'timing' }}
+        style={[styles.ripple,styles.rippleSecondary]}
+        transition={{delay: 500,duration: 2000,loop: true,type: 'timing'}}
       />
 
       <TouchableOpacity
         accessibilityLabel="Botón de emergencia SOS"
         accessibilityRole="button"
         activeOpacity={0.7}
+        disabled={loading}
         onPress={onPress}
         style={styles.button}
       >
-        <Text style={styles.text}>S.O.S</Text>
+        {loading ? (
+          <ActivityIndicator color="#fff" size="small" />
+        ) : (
+          <Text style={styles.text}>S.O.S</Text>
+        )}
       </TouchableOpacity>
     </View>
   );
@@ -65,7 +71,7 @@ const styles = StyleSheet.create({
     height: SIZE,
     justifyContent: 'center',
     shadowColor: '#000',
-    shadowOffset: { height: 2, width: 0 },
+    shadowOffset: {height: 2,width: 0},
     shadowOpacity: 0.2,
     shadowRadius: 4,
     width: SIZE,

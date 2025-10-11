@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 // src/data/services/attendances.ts
-import { instance } from '../instance';
+import {instance} from '../instance';
 
 /** === TIPOS (compártelos con el hook para evitar duplicados) === */
 export type AttendanceDTO = {
@@ -8,7 +8,7 @@ export type AttendanceDTO = {
   checkOut: null | string;
   createdAt: string; // ISO
   id: number;
-  location?: { lat: null | number; lng: null | number } | null;
+  location?: {lat: null | number; lng: null | number} | null;
   site?: any | null;
   status: string; // 'ON_SITE' | 'OFF_SITE' | ...
   user?: {
@@ -25,7 +25,7 @@ export type Page<T> = {
   nextCursor: null | number;
 };
 
-export type AttendancesParams = {
+export type GlobalPaginationParams = {
   cursor?: number;
   from?: string; // ISO yyyy-mm-dd (opcional)
   limit?: number;
@@ -34,10 +34,10 @@ export type AttendancesParams = {
 
 /** Lista paginada de asistencias (cursor-based, DESC por id) */
 export async function getAttendances(
-  params: AttendancesParams = {},
+  params: GlobalPaginationParams = {},
 ): Promise<Page<AttendanceDTO>> {
   // Solo manda al backend los params definidos
-  const query: Record<string, any> = {};
+  const query: Record<string,any> = {};
   if (params.cursor != null) {
     query.cursor = params.cursor;
   }
@@ -51,9 +51,9 @@ export async function getAttendances(
     query.to = params.to;
   }
 
-  const { data } = await instance.get<Page<AttendanceDTO>>(
+  const {data} = await instance.get<Page<AttendanceDTO>>(
     'mobile/attendances',
-    { params: query },
+    {params: query},
   );
 
   // Normalización suave (evita undefined inesperados)
@@ -67,11 +67,11 @@ export async function getAttendances(
     status: it.status,
     user: it.user
       ? {
-          firstName: it.user.firstName ?? null,
-          id: it.user.id,
-          image: it.user.image ?? null,
-          lastName: it.user.lastName ?? null,
-        }
+        firstName: it.user.firstName ?? null,
+        id: it.user.id,
+        image: it.user.image ?? null,
+        lastName: it.user.lastName ?? null,
+      }
       : undefined,
   }));
 
@@ -84,7 +84,7 @@ export async function getAttendances(
 
 /** Detalle de una asistencia */
 export async function getAttendanceDetail(id: number): Promise<AttendanceDTO> {
-  const { data } = await instance.get<AttendanceDTO>(
+  const {data} = await instance.get<AttendanceDTO>(
     `mobile/attendances/${id}`,
   );
   // (Opcional) normaliza igual que arriba si lo necesitas
@@ -98,11 +98,11 @@ export async function getAttendanceDetail(id: number): Promise<AttendanceDTO> {
     status: data.status,
     user: data.user
       ? {
-          firstName: data.user.firstName ?? null,
-          id: data.user.id,
-          image: data.user.image ?? null,
-          lastName: data.user.lastName ?? null,
-        }
+        firstName: data.user.firstName ?? null,
+        id: data.user.id,
+        image: data.user.image ?? null,
+        lastName: data.user.lastName ?? null,
+      }
       : undefined,
   };
 }

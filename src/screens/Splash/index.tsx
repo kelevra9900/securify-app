@@ -40,17 +40,24 @@ const SplashScreen = ({navigation}: RootScreenProps<Paths.Splash>) => {
 			/>
 
 			<MotiView
-				animate={{opacity: 1,scale: 1}}
-				from={{opacity: 0,scale: 0.9}}
-				transition={{duration: 600,type: 'timing'}}
+				animate={{opacity: 1,scale: 1,translateY: -8}}
+				from={{opacity: 0,scale: 0.9,translateY: 8}}
+				style={styles.logoWrap}
+				transition={{
+					duration: 1200,
+					loop: true,
+					repeatReverse: true, // va y viene
+					type: 'timing',
+				}}
 			>
-				<MotiImage
-					animate={{translateY: -8}}
-					from={{translateY: 8}}
+				{/* Rectángulo blanco redondeado detrás */}
+				<View style={styles.logoBackground} />
+
+				{/* Logo encima */}
+				<Image
 					resizeMode="contain"
 					source={require('@/assets/images/logo.png')}
 					style={styles.logo}
-					transition={{duration: 1200,loop: true,type: 'timing'}}
 				/>
 			</MotiView>
 
@@ -78,6 +85,22 @@ const styles = StyleSheet.create({
 	logo: {
 		height: getWidth(192),
 		width: getWidth(192),
+	},
+	logoBackground: {
+		...StyleSheet.absoluteFillObject,
+		backgroundColor: '#FFFFFF',
+		borderRadius: 24,
+		elevation: 6,
+		shadowColor: '#000',
+		shadowOffset: {height: 6,width: 0},
+		shadowOpacity: 0.12,
+		shadowRadius: 10,
+	},
+	logoWrap: {
+		alignItems: 'center',
+		height: getWidth(220),
+		justifyContent: 'center',
+		width: getWidth(220),
 	},
 	text: {
 		fontSize: 32,

@@ -24,7 +24,7 @@ import {useTheme} from '@/context/Theme';
 import {tryGetCurrentLatLng} from '@/utils/location';
 import {showToast} from '@/utils/toast';
 
-type FormValues = {
+export type FormValues = {
   description: string;
   title: string;
 };

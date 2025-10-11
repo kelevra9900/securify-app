@@ -87,8 +87,8 @@ android {
         applicationId "com.securify.app"
         minSdk = rootProject.ext.minSdkVersion
         targetSdk = rootProject.ext.targetSdkVersion
-        versionCode = 5
-        versionName = "1.0.3-beta"
+        versionCode = 11
+        versionName = "1.0.5-beta"
     }
     signingConfigs {
         debug {

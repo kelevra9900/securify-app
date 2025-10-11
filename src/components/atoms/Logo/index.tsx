@@ -20,6 +20,8 @@ const Logo = ({animated = false}: Props) => {
 			style={[styles.container,{backgroundColor: theme.cardBackground}]}
 			transition={animated ? {duration: 600,type: 'timing'} : undefined}
 		>
+			<View style={styles.logoBackground} />
+
 			<Image
 				resizeMode="contain"
 				source={require('@/assets/images/logo.png')}
@@ -45,5 +47,15 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		height: moderateScale(76,0.3),
 		width: moderateScale(90,0.3),
+	},
+	logoBackground: {
+		...StyleSheet.absoluteFillObject,
+		backgroundColor: '#FFFFFF',
+		borderRadius: 24,
+		elevation: 6,
+		shadowColor: '#000',
+		shadowOffset: {height: 6,width: 0},
+		shadowOpacity: 0.12,
+		shadowRadius: 10,
 	},
 });

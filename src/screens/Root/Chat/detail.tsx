@@ -21,6 +21,7 @@ import {useConversation} from '@/hooks/chat/useConversation';
 import type {Row} from '@/utils/chat';
 import {buildRows} from '@/utils/chat';
 import {useGetCurrentUser} from '@/hooks/user/current_user';
+import {useTyping} from '@/hooks/chat/useTyping';
 
 type RouteParams = {conversationId: number; title?: string};
 
@@ -28,20 +29,28 @@ export default function ChatDetailScreen() {
 	const {theme} = useTheme();
 	const route = useRoute() as unknown as {params: RouteParams};
 	const navigation = useNavigation();
-	const {data: profile} = useGetCurrentUser();
+	const {data: profile,isError} = useGetCurrentUser();
 
 	const conversationId = route?.params?.conversationId;
 	const displayName = route?.params?.title ?? 'Chat';
 
+	const {peerTyping,start: typingStart,stop: typingStop} = useTyping(conversationId);
 
+	const handleChangeText = useCallback((v: string) => {
+		setText(v);
+		const trimmed = v.trim();
+		if (trimmed.length > 0) {
+			typingStart();
+		} else {
+			typingStop();
+		}
+	},[typingStart,typingStop]);
 
-	// Altura real del input para reservar espacio (con lista invertida, usamos paddingTop)
 	const insets = useSafeAreaInsets();
 	const INPUT_MIN_H = moderateScale(50);
 	const WRAPPER_VPAD = 12;
 	const INPUT_TOTAL = INPUT_MIN_H + WRAPPER_VPAD + insets.bottom + 6;
 
-	// Hook centralizado para la lógica de la conversación
 	const {
 		fetchNextPage,
 		hasNextPage,
@@ -51,21 +60,24 @@ export default function ChatDetailScreen() {
 		send,
 	} = useConversation(conversationId);
 
-	// Construye filas con separadores de fecha (indicamos inverted:true)
 	const rows: Row[] = useMemo(
-		() => buildRows(datasetDESC,{inverted: false}),
+		() => buildRows(datasetDESC,{inverted: true}),
 		[datasetDESC],
 	);
 
 	const [text,setText] = useState('');
 
 	const handleSend = useCallback(() => {
-		send(text);
+		const msg = text.trim();
+		if (!msg) {return;}
+		typingStop();
+		send(msg);
 		setText('');
-	},[send,text]);
+	},[text,send,typingStop]);
+
 
 	// Loader inicial
-	if (isLoading) {
+	if (isLoading || isError) {
 		return (
 			<CSafeAreaView edges={['top','bottom']} style={{backgroundColor: theme.background}}>
 				<View style={[styles.header,{borderBottomColor: theme.cardBackground}]}>
@@ -102,7 +114,7 @@ export default function ChatDetailScreen() {
 					data={rows}
 					inverted
 					keyboardShouldPersistTaps="handled"
-					keyExtractor={(r) => r.key}
+					keyExtractor={(r: any) => (r.kind === 'msg' ? `m:${r.msg.clientId ?? r.msg.id}` : `s:${r.key}`)}
 					ListFooterComponent={
 						isFetchingNextPage ? (
 							<View style={{paddingVertical: 12}}>
@@ -130,7 +142,7 @@ export default function ChatDetailScreen() {
 
 						// item.kind === 'msg'
 						const msg = item.msg;
-						const isMe = msg.fromUserId === profile?.user.id;
+						const isMe = msg.fromUserId === profile!.user.id;
 						const created = new Date(msg.createdAt ?? Date.now());
 						const time = created.toLocaleTimeString([],{hour: '2-digit',minute: '2-digit'});
 
@@ -171,14 +183,16 @@ export default function ChatDetailScreen() {
 				>
 					<View style={[styles.inputBox,{backgroundColor: theme.cardBackground}]}>
 						<TextInput
-							onChangeText={setText}
+							onBlur={typingStop}
+							onChangeText={handleChangeText}
 							onSubmitEditing={handleSend}
 							placeholder="Escribe un mensaje..."
 							placeholderTextColor={theme.textSecondary}
 							returnKeyType="send"
 							style={[styles.input,{color: theme.textPrimary}]}
 							value={text}
-						/>						<TouchableOpacity disabled={!text.trim()} onPress={handleSend}>
+						/>
+						<TouchableOpacity disabled={!text.trim()} onPress={handleSend}>
 							<SendHorizonal color={theme.textPrimary} size={22} />
 						</TouchableOpacity>
 					</View>
