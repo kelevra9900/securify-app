@@ -1,5 +1,6 @@
 package com.securify.app
 
+import android.os.Bundle
 import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.ReactNativeApplicationEntryPoint.loadReactNative
@@ -13,6 +14,15 @@ class MainActivity : ReactActivity() {
    * rendering of the component.
    */
   override fun getMainComponentName(): String = "trablisaRN"
+
+  /**
+   * Previene la restauración de fragmentos de pantalla.
+   * Requerido por react-native-screens para evitar el warning:
+   * "Screen fragments should never be restored"
+   */
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(null)
+  }
 
   /**
    * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]

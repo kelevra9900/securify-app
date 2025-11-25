@@ -15,6 +15,7 @@ export const enum Paths {
   Login = 'login',
   LoginWithCredentials = 'loginWithCredentials',
   Notifications = 'notifications',
+  Permissions = 'permissions',
   PreviewRound = 'previewRound',
   Profile = 'profile',
   Reports = 'reports',

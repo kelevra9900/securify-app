@@ -6,11 +6,9 @@ import {useTheme} from '@/context/Theme';
 import {darkTheme} from '@/assets/theme';
 import type {PastRound} from '@/types/rounds';
 
-
-
 type Props = {
 	errorText?: string;
-	limit?: number;                        // cuántas mostrar en el resumen (default 5)
+	limit?: number;
 	loading?: boolean;
 	onItemPress?: (id: string) => void;
 	onRetry?: () => void;

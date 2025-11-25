@@ -1,7 +1,7 @@
 // src/screens/RoundActiveScreen.tsx
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { FlashList } from '@shopify/flash-list';
-import React, { useMemo } from 'react';
+import {useNavigation,useRoute} from '@react-navigation/native';
+import {FlashList} from '@shopify/flash-list';
+import React,{useMemo} from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -11,11 +11,11 @@ import {
   View,
 } from 'react-native';
 
-import { useEndRound, useLogCheckpoint, useRoundDetail } from '@/hooks/rounds';
+import {useEndRound,useLogCheckpoint,useRoundDetail} from '@/hooks/rounds';
 
-import { CSafeAreaView, Header } from '@/components/atoms';
+import {CSafeAreaView,Header} from '@/components/atoms';
 
-import { darkTheme } from '@/assets/theme';
+import {darkTheme} from '@/assets/theme';
 
 export default function RoundActiveScreen() {
   const nav = useNavigation();
@@ -23,7 +23,7 @@ export default function RoundActiveScreen() {
   const route = useRoute<any>();
   const roundId = route.params?.roundId as number;
 
-  const { data, isFetching, isLoading, refetch } = useRoundDetail(roundId);
+  const {data,isFetching,isLoading,refetch} = useRoundDetail(roundId);
   const end = useEndRound();
   const log = useLogCheckpoint();
 
@@ -34,21 +34,21 @@ export default function RoundActiveScreen() {
 
   const nextCp = useMemo(
     () => data?.checkpoints.find((c) => !completedIds.has(c.id)),
-    [data, completedIds],
+    [data,completedIds],
   );
 
   const onLog = async (cpId: number) => {
     // TODO: obtén location real del dispositivo si usarás método 'gps'
-    await log.mutateAsync({ body: { method: 'gps' }, cpId, roundId });
+    await log.mutateAsync({body: {method: 'gps'},cpId,roundId});
     refetch();
   };
 
   const onEnd = () => {
-    Alert.alert('Terminar caminata', '¿Seguro que deseas terminar?', [
-      { style: 'cancel', text: 'Cancelar' },
+    Alert.alert('Terminar caminata','¿Seguro que deseas terminar?',[
+      {style: 'cancel',text: 'Cancelar'},
       {
         onPress: async () => {
-          await end.mutateAsync({ roundId });
+          await end.mutateAsync({roundId});
           nav.goBack();
         },
         style: 'destructive',
@@ -61,7 +61,7 @@ export default function RoundActiveScreen() {
     return (
       <CSafeAreaView
         edges={['top']}
-        style={{ backgroundColor: darkTheme.background }}
+        style={{backgroundColor: darkTheme.background}}
       >
         <Header title="Caminata en curso" />
         <ActivityIndicator color={darkTheme.highlight} style={styles.center} />
@@ -75,13 +75,13 @@ export default function RoundActiveScreen() {
   return (
     <CSafeAreaView
       edges={['top']}
-      style={{ backgroundColor: darkTheme.background, flex: 1 }}
+      style={{backgroundColor: darkTheme.background,flex: 1}}
     >
       <Header
         rightSlot={
           <Text
             onPress={onEnd}
-            style={{ color: darkTheme.error, fontWeight: '600' }}
+            style={{color: darkTheme.error,fontWeight: '600'}}
           >
             Terminar
           </Text>
@@ -113,15 +113,14 @@ export default function RoundActiveScreen() {
       </View>
 
       <FlashList
-        contentContainerStyle={{ padding: 16 }}
+        contentContainerStyle={{padding: 16}}
         data={data.checkpoints}
-        estimatedItemSize={72}
-        ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
+        ItemSeparatorComponent={() => <View style={{height: 10}} />}
         keyExtractor={(c) => String(c.id)}
-        renderItem={({ item }) => {
+        renderItem={({item}) => {
           const done = completedIds.has(item.id);
           return (
-            <View style={[styles.cpRow, done && styles.cpDone]}>
+            <View style={[styles.cpRow,done && styles.cpDone]}>
               <Text numberOfLines={1} style={styles.cpName}>
                 {item.location}
               </Text>
@@ -151,9 +150,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
   },
-  cpDone: { opacity: 0.6 },
-  cpMeta: { color: darkTheme.textSecondary, fontSize: 12 },
-  cpName: { color: darkTheme.textPrimary, fontWeight: '600' },
+  cpDone: {opacity: 0.6},
+  cpMeta: {color: darkTheme.textSecondary,fontSize: 12},
+  cpName: {color: darkTheme.textPrimary,fontWeight: '600'},
   cpRow: {
     backgroundColor: darkTheme.cardBackground,
     borderColor: darkTheme.border,
@@ -162,8 +161,8 @@ const styles = StyleSheet.create({
     gap: 6,
     padding: 12,
   },
-  headerBox: { gap: 8, padding: 16 },
-  meta: { color: darkTheme.textSecondary },
+  headerBox: {gap: 8,padding: 16},
+  meta: {color: darkTheme.textSecondary},
   primaryBtn: {
     alignItems: 'center',
     backgroundColor: darkTheme.highlight,
@@ -171,7 +170,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
     padding: 12,
   },
-  primaryBtnText: { color: '#fff', fontWeight: '700' },
+  primaryBtnText: {color: '#fff',fontWeight: '700'},
   progressText: {
     color: darkTheme.textPrimary,
     fontSize: 16,
@@ -185,5 +184,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
   },
-  smallBtnText: { color: '#fff', fontSize: 12, fontWeight: '600' },
+  smallBtnText: {color: '#fff',fontSize: 12,fontWeight: '600'},
 });

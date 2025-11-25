@@ -7,3 +7,13 @@ export type CheckpointLog = {
 	status: 'completed' | 'pending';
 	timestamp?: string;     // si también puede faltar
 };
+
+export type Checkpoint = {
+	checkedAt: string;
+	environmentId: number;
+	id: number;
+	latitude: number;
+	location: string;
+	longitude: number;
+	roundId: number;
+}

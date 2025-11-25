@@ -35,6 +35,8 @@ local.properties
 .cxx/
 *.keystore
 !debug.keystore
+*.jks
+android/app/cert/cert.jks
 
 # node.js
 #

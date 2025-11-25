@@ -1,12 +1,11 @@
-import type { NavigationProp } from '@react-navigation/native';
-import type { RootStackParamList } from '@/navigation/types';
-import type { RoundListItem } from '@/types/rounds';
+import type {NavigationProp} from '@react-navigation/native';
+import type {RootStackParamList} from '@/navigation/types';
+import type {RoundListItem} from '@/types/rounds';
 
-import { useNavigation } from '@react-navigation/native';
-import { FlashList } from '@shopify/flash-list';
-import React, { useCallback, useMemo } from 'react';
+import {useNavigation} from '@react-navigation/native';
+import {FlashList} from '@shopify/flash-list';
+import React,{useCallback,useMemo,useState} from 'react';
 import {
-  ActivityIndicator,
   RefreshControl,
   StyleSheet,
   Text,
@@ -17,21 +16,21 @@ import {
 import {
   useActiveRound,
   useAvailableRounds,
-  useStartRound,
 } from '@/hooks/rounds';
-import { Paths } from '@/navigation/paths';
+import {Paths} from '@/navigation/paths';
 
-import { CSafeAreaView, Header, PrimaryButton } from '@/components/atoms';
+import {CSafeAreaView,Header,PrimaryButton} from '@/components/atoms';
+import {ActiveRoundModal,ActiveRoundSkeleton,RoundListSkeleton} from '@/components/molecules';
 
-import { darkTheme } from '@/assets/theme';
-import { showSuccessToast } from '@/utils/toast';
+import {colors,darkTheme} from '@/assets/theme';
+
 
 export default function RoundPreviewScreen() {
   const nav = useNavigation<NavigationProp<RootStackParamList>>();
-  const { data, isError, isLoading, isRefetching, refetch } =
+  const {data,isError,isLoading,isRefetching,refetch} =
     useAvailableRounds();
-  const { data: active } = useActiveRound(); // { id, name, done, total, startedAtISO }
-  const { mutate: startRound } = useStartRound();
+  const {data: active} = useActiveRound(); // { id, name, done, total, startedAtISO }
+  const [showActiveRoundModal,setShowActiveRoundModal] = useState(false);
 
   const items = data ?? [];
   const hasActive = !!active?.data?.id;
@@ -40,19 +39,29 @@ export default function RoundPreviewScreen() {
     if (!active?.data?.id) {
       return;
     }
-    nav.navigate(Paths.Walk);
-  }, [active?.data?.id, nav]);
+    nav.navigate(Paths.Walk,{
+      roundId: active?.data?.id,
+    });
+  },[active?.data?.id,nav]);
 
   const empty = useMemo(
     () => !isLoading && !isError && items.length === 0,
-    [isLoading, isError, items.length],
+    [isLoading,isError,items.length],
   );
 
-  if (isLoading) {
+  if (isLoading && !data) {
     return (
-      <CSafeAreaView edges={['top']} style={styles.center}>
-        <Header title="Caminatas" />
-        <ActivityIndicator color={darkTheme.highlight} />
+      <CSafeAreaView
+        edges={['top']}
+        style={{backgroundColor: darkTheme.background,flex: 1}}
+      >
+        <Header title="Rondas disponibles" />
+
+        {/* Skeleton para ronda activa */}
+        <ActiveRoundSkeleton />
+
+        {/* Skeleton para lista de rondas */}
+        <RoundListSkeleton itemCount={4} />
       </CSafeAreaView>
     );
   }
@@ -70,12 +79,12 @@ export default function RoundPreviewScreen() {
   }
 
   const contentStyle =
-    items.length === 0 ? { ...styles.list, flex: 1 } : styles.list;
+    items.length === 0 ? {...styles.list,flex: 1} : styles.list;
 
   return (
     <CSafeAreaView
       edges={['top']}
-      style={{ backgroundColor: darkTheme.background, flex: 1 }}
+      style={{backgroundColor: darkTheme.background,flex: 1}}
     >
       <Header title="Caminatas" />
 
@@ -96,8 +105,7 @@ export default function RoundPreviewScreen() {
         <FlashList
           contentContainerStyle={contentStyle}
           data={items}
-          estimatedItemSize={112}
-          ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+          ItemSeparatorComponent={() => <View style={{height: 12}} />}
           keyExtractor={(i) => String(i.id)}
           refreshControl={
             <RefreshControl
@@ -107,17 +115,44 @@ export default function RoundPreviewScreen() {
               tintColor={darkTheme.highlight}
             />
           }
-          renderItem={({ item }) => (
+          renderItem={({item}) => (
             <RoundCard
               item={item}
               onContinue={() => {
-                nav.navigate(Paths.Walk);
+                nav.navigate(Paths.Walk,{
+                  roundId: item.id,
+                });
               }}
-              onStart={() => nav.navigate(Paths.Walk)}
+              onStart={() => {
+                // Si hay una ronda activa, no permitir iniciar otra
+                if (hasActive) {
+                  setShowActiveRoundModal(true);
+                  return;
+                }
+                nav.navigate(Paths.Walk,{roundId: item.id});
+              }}
             />
           )}
         />
       )}
+
+      {/* Modal de ronda activa */}
+      <ActiveRoundModal
+        activeName={active?.data?.name || 'Caminata desconocida'}
+        activeProgress={active?.data?.progress ?
+          `${active.data.checkpoints?.length || 0}/${active.data.progress.total || 0} checkpoints` :
+          'Progreso desconocido'}
+        onCancel={() => setShowActiveRoundModal(false)}
+        onContinue={() => {
+          setShowActiveRoundModal(false);
+          if (active?.data?.id) {
+            nav.navigate(Paths.Walk,{
+              roundId: active.data.id
+            });
+          }
+        }}
+        visible={showActiveRoundModal}
+      />
     </CSafeAreaView>
   );
 }
@@ -136,15 +171,15 @@ function ActiveRoundBanner({
   total: number;
 }) {
   const startedAt = startedAtISO
-    ? new Date(startedAtISO).toLocaleTimeString('es-MX', {
-        hour: '2-digit',
-        minute: '2-digit',
-      })
+    ? new Date(startedAtISO).toLocaleTimeString('es-MX',{
+      hour: '2-digit',
+      minute: '2-digit',
+    })
     : '';
 
   return (
     <View style={styles.banner}>
-      <View style={{ flex: 1 }}>
+      <View style={{flex: 1}}>
         <Text numberOfLines={1} style={styles.bannerTitle}>
           Ronda en curso
         </Text>
@@ -169,7 +204,7 @@ function RoundCard({
   onContinue,
   onStart,
 }: {
-  item: { doneCheckpoints?: number } & RoundListItem; // 👈 no tocamos status
+  item: {doneCheckpoints?: number} & RoundListItem; // 👈 no tocamos status
   onContinue: () => void;
   onStart: () => void;
 }) {
@@ -219,26 +254,26 @@ function RoundCard({
         </View>
       </View>
 
-      <View style={{ height: 6 }} />
+      <View style={{height: 6}} />
       <Text style={styles.meta}>
-        {new Date(item.startISO).toLocaleTimeString('es-MX', {
+        {new Date(item.startISO).toLocaleTimeString('es-MX',{
           hour: '2-digit',
           minute: '2-digit',
         })}
         {item.endISO
-          ? ` - ${new Date(item.endISO).toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' })}`
+          ? ` - ${new Date(item.endISO).toLocaleTimeString('es-MX',{hour: '2-digit',minute: '2-digit'})}`
           : ''}
       </Text>
       <Text style={styles.meta}>
         {total} checkpoints · {pct}% completado
       </Text>
 
-      <View style={{ height: 12 }} />
+      <View style={{height: 12}} />
       <View style={styles.progressTrack}>
-        <View style={[styles.progressFill, { width: `${pct}%` }]} />
+        <View style={[styles.progressFill,{width: `${pct}%`}]} />
       </View>
 
-      <View style={{ height: 12 }} />
+      <View style={{height: 12}} />
       <View style={styles.cardRow}>
         <Text style={styles.meta}>
           {done}/{total} completados
@@ -253,9 +288,9 @@ function RoundCard({
   );
 }
 
-function EmptyState({ onRefresh }: { onRefresh: () => void }) {
+function EmptyState({onRefresh}: {onRefresh: () => void}) {
   return (
-    <View style={[styles.center, { paddingHorizontal: 24 }]}>
+    <View style={[styles.center,{paddingHorizontal: 24}]}>
       <Text style={styles.emptyTitle}>Sin rondas disponibles</Text>
       <Text style={styles.emptyText}>
         No tienes caminatas asignadas por ahora. Desliza hacia abajo para
@@ -302,8 +337,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  bannerBtnText: { color: '#0B0B0B', fontSize: 12, fontWeight: '700' },
-  bannerMeta: { color: darkTheme.textSecondary, fontSize: 12, marginTop: 2 },
+  bannerBtnText: {color: colors.white,fontSize: 12,fontWeight: '700'},
+  bannerMeta: {color: darkTheme.textSecondary,fontSize: 12,marginTop: 2},
   bannerTitle: {
     color: darkTheme.textPrimary,
     fontSize: 14,
@@ -324,7 +359,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
 
-  meta: { color: darkTheme.textSecondary, fontSize: 12, marginTop: 2 },
+  meta: {color: darkTheme.textSecondary,fontSize: 12,marginTop: 2},
   title: {
     color: darkTheme.textPrimary,
     flex: 1,
@@ -340,7 +375,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  badgeIdle: { backgroundColor: 'transparent', borderColor: darkTheme.border },
+  badgeIdle: {backgroundColor: 'transparent',borderColor: darkTheme.border},
   badgeInProgress: {
     backgroundColor: `${darkTheme.highlight}22`,
     borderColor: darkTheme.highlight,
@@ -384,7 +419,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  tryBtnText: { color: darkTheme.textPrimary, fontWeight: '700' },
+  tryBtnText: {color: darkTheme.textPrimary,fontWeight: '700'},
 
   // Links / feedback
   link: {
@@ -392,5 +427,5 @@ const styles = StyleSheet.create({
     marginTop: 8,
     textDecorationLine: 'underline',
   },
-  text: { color: darkTheme.textPrimary, marginTop: 8 },
+  text: {color: darkTheme.textPrimary,marginTop: 8},
 });

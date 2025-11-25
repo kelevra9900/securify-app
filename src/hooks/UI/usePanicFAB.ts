@@ -1,26 +1,47 @@
-import type { AlertCreatePayload } from '@/sockets/alert.types';
-import type { GestureResponderEvent } from 'react-native';
+import type {AlertCreatePayload} from '@/sockets/alert.types';
+import type {GestureResponderEvent} from 'react-native';
 
-import { useCallback, useState } from 'react';
+import {useCallback,useMemo,useState} from 'react';
+import {useSelector} from 'react-redux';
 
-import { useAlertSocket } from '@/sockets/useAlertSocket';
-import { flashError, flashSuccess } from '@/utils/flashMessageHelper';
+import {useAlertSocket} from '@/sockets/useAlertSocket';
+import {flashError,flashSuccess} from '@/utils/flashMessageHelper';
+import type {RootState} from '@/store';
 
 type TriggerOverrides = Partial<AlertCreatePayload> | undefined;
 
 const isGestureEvent = (
-  value: TriggerOverrides | GestureResponderEvent,
+  value: GestureResponderEvent | TriggerOverrides,
 ): value is GestureResponderEvent =>
   !!value && typeof value === 'object' && 'nativeEvent' in value;
 
 export const usePanicFAB = (token: null | string) => {
-  const { connected, createAlert, lastError, resetError, socket } =
-    useAlertSocket(token);
-  const [sending, setSending] = useState(false);
+  const {environmentId,sectorId,userId} = useSelector((state: RootState) => ({
+    environmentId:
+      state.profile.user?.environmentId ?? state.profile.environment?.id,
+    sectorId: state.profile.sector?.id ?? undefined,
+    userId: state.profile.user?.id,
+  }));
+
+  const alertScope = useMemo(
+    () =>
+      userId
+        ? {
+          environmentId,
+          sectorId,
+          userId,
+        }
+        : null,
+    [environmentId,sectorId,userId],
+  );
+
+  const {connected,createAlert,lastError,resetError,socket} =
+    useAlertSocket(token,alertScope);
+  const [sending,setSending] = useState(false);
 
   const triggerSOS = useCallback(
     async (
-      maybeOverrides?: TriggerOverrides | GestureResponderEvent,
+      maybeOverrides?: GestureResponderEvent | TriggerOverrides,
     ) => {
       const overrides = isGestureEvent(maybeOverrides)
         ? undefined
@@ -55,7 +76,8 @@ export const usePanicFAB = (token: null | string) => {
           longitude: null,
           ...overrides,
         });
-        flashSuccess('¡SOS enviado!', 'Un supervisor ha sido notificado.');
+        flashSuccess('¡SOS enviado!','Un supervisor ha sido notificado.');
+
       } catch (error) {
         const raw = error instanceof Error ? error.message : undefined;
         const serverMessage = lastError?.message ?? raw;
@@ -72,7 +94,7 @@ export const usePanicFAB = (token: null | string) => {
           description =
             'No pudimos confirmar el SOS. Revisa tu conexión e inténtalo nuevamente.';
         }
-        flashError('No se pudo enviar el SOS', description);
+        flashError('No se pudo enviar el SOS',description);
       } finally {
         setSending(false);
       }

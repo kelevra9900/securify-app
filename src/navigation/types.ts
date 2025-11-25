@@ -27,6 +27,7 @@ export type RootStackParamList = {
   [Paths.Login]: undefined;
   [Paths.LoginWithCredentials]: undefined;
   [Paths.Notifications]: undefined;
+  [Paths.Permissions]: undefined;
   [Paths.PreviewRound]: undefined;
   [Paths.Profile]: undefined;
   [Paths.Reports]: undefined;
@@ -36,7 +37,9 @@ export type RootStackParamList = {
   [Paths.Splash]: undefined;
   [Paths.TabBarNavigation]: undefined;
   [Paths.Tasks]: undefined;
-  [Paths.Walk]: undefined;
+  [Paths.Walk]: {
+    roundId: number;
+  };
 };
 
 export type RootScreenProps<

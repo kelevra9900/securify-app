@@ -3,21 +3,26 @@ import {
 	ActivityIndicator,
 	Alert,
 	Animated,
+	FlatList,
 	KeyboardAvoidingView,
+	Modal,
 	NativeModules,
 	Platform,
 	ScrollView,
 	StyleSheet,
 	Text,
 	TextInput,
+	TouchableOpacity,
 	View,
 } from 'react-native';
 import {Nfc,SmartphoneNfc} from 'lucide-react-native';
 
 import {colors,type ThemeType} from '@/assets/theme/colors';
-import {CSafeAreaView,Header,PrimaryButton} from '@/components/atoms';
+import type {Checkpoint} from '@/types/checkpoint';
+import {CSafeAreaView,Header,PrimaryButton,ScanModal} from '@/components/atoms';
 import {useTheme} from '@/context/Theme';
-import {scanCheckpointTag} from '@/utils/nfc';
+import {scanCheckpointTag,writeCheckpointTag} from '@/utils/nfc';
+import {useGetCheckpoints} from '@/hooks/checkpoints/useGetCheckpoints';
 
 type ExtendedScanResult = {
 	ndef?: {
@@ -63,9 +68,23 @@ const ControlScreen: React.FC = () => {
 	const [tagInfo,setTagInfo] = useState<null | TagInfo>(null);
 	const [alias,setAlias] = useState('');
 	const [checkpointId,setCheckpointId] = useState('');
+	const [selectedCheckpoint,setSelectedCheckpoint] = useState<Checkpoint | null>(null);
+	const [checkpointModalVisible,setCheckpointModalVisible] = useState(false);
 	const [logEntries,setLogEntries] = useState<TagLogEntry[]>([]);
 	const [errorMessage,setErrorMessage] = useState<null | string>(null);
-
+	const [writeModalVisible,setWriteModalVisible] = useState(false);
+	const {
+		data,
+		fetchNextPage,
+		hasNextPage,
+		isFetchingNextPage,
+		isPending,
+	} = useGetCheckpoints({limit: 30});
+	const checkpoints = useMemo(
+		() => data?.pages.flatMap(page => page.items) ?? [],
+		[data],
+	);
+	const isLoadingCheckpoints = isPending && checkpoints.length === 0;
 	const pulse = useRef(new Animated.Value(1)).current;
 
 	const canWrite = Boolean(NfcModule?.writeTag);
@@ -122,6 +141,26 @@ const ControlScreen: React.FC = () => {
 		setLogEntries(prev => [entry,...prev].slice(0,6));
 	},[]);
 
+	const handleOpenCheckpointPicker = useCallback(() => {
+		setCheckpointModalVisible(true);
+	},[]);
+
+	const handleCloseCheckpointPicker = useCallback(() => {
+		setCheckpointModalVisible(false);
+	},[]);
+
+	const handleSelectCheckpoint = useCallback((checkpoint: Checkpoint) => {
+		setSelectedCheckpoint(checkpoint);
+		setCheckpointId(String(checkpoint.id));
+		setCheckpointModalVisible(false);
+	},[]);
+
+	const loadMoreCheckpoints = useCallback(() => {
+		if (hasNextPage && !isFetchingNextPage) {
+			void fetchNextPage();
+		}
+	},[fetchNextPage,hasNextPage,isFetchingNextPage]);
+
 	const formattedSupportMessage = useMemo(() => {
 		switch (supportState) {
 			case 'checking':
@@ -145,6 +184,10 @@ const ControlScreen: React.FC = () => {
 
 		try {
 			const rawResult = (await scanCheckpointTag(TIMEOUT_MS)) as ExtendedScanResult;
+
+			// eslint-disable-next-line no-console
+			console.log('📖 [SCAN] Tag detectado - Raw result:',JSON.stringify(rawResult,null,2));
+
 			const now = new Date().toISOString();
 			const info: TagInfo = {
 				action: 'scan',
@@ -155,10 +198,24 @@ const ControlScreen: React.FC = () => {
 				uid: rawResult.uid,
 			};
 			setTagInfo(info);
+
+			// eslint-disable-next-line no-console
+			console.log('📊 [SCAN] Información procesada:',JSON.stringify(info,null,2));
+
+			if (!rawResult.ndef?.payload) {
+				// eslint-disable-next-line no-console
+				console.warn('⚠️ [SCAN] El tag NO tiene datos NDEF. Puede estar vacío o no formateado correctamente.');
+			} else {
+				// eslint-disable-next-line no-console
+				console.log('✅ [SCAN] Payload NDEF leído exitosamente:',rawResult.ndef.payload);
+			}
+
 			pushLog({
 				action: 'scan',
 				id: `scan-${now}`,
-				message: `Tag ${rawResult.uid || 'desconocido'} leído correctamente`,
+				message: rawResult.ndef?.payload
+					? `Tag ${rawResult.uid} leído con datos NDEF`
+					: `Tag ${rawResult.uid} leído (sin datos NDEF)`,
 				timestamp: now,
 			});
 		} catch (error) {
@@ -179,7 +236,7 @@ const ControlScreen: React.FC = () => {
 	const buildPayload = useCallback(() => {
 		const checkpoint = checkpointId.trim();
 		if (!checkpoint) {
-			throw new Error('Ingresa el identificador del checkpoint antes de escribir.');
+			throw new Error('Selecciona un checkpoint antes de escribir.');
 		}
 
 		const payload = {
@@ -192,6 +249,8 @@ const ControlScreen: React.FC = () => {
 	},[alias,checkpointId]);
 
 	const handleWrite = useCallback(async () => {
+		// eslint-disable-next-line no-console
+		console.log('handleWrite ====>');
 		if (mode !== 'idle' || supportState !== 'supported') {
 			return;
 		}
@@ -203,26 +262,49 @@ const ControlScreen: React.FC = () => {
 		try {
 			const payload = buildPayload();
 			setErrorMessage(null);
+
+			// Mostrar modal de escritura
+			setWriteModalVisible(true);
 			setMode('writing');
-			if (!NfcModule?.writeTag) {
-				throw new Error('Módulo de escritura NFC no disponible.');
-			}
-			await NfcModule.writeTag(payload,{timeoutMs: TIMEOUT_MS});
+
+			// Pequeño delay para que el modal se renderice
+			await new Promise((resolve) => setTimeout(resolve,500));
+
+			// eslint-disable-next-line no-console
+			console.log('📝 [WRITE] Payload a escribir:',payload);
+			// eslint-disable-next-line no-console
+			console.log('📝 [WRITE] Tamaño del payload:',payload.length,'bytes');
+
+			// Usar writeCheckpointTag con timeout
+			await writeCheckpointTag(payload,{timeoutMs: TIMEOUT_MS});
+
+			// eslint-disable-next-line no-console
+			console.log('✅ [WRITE] Escritura completada sin errores');
+
 			const now = new Date().toISOString();
 			setTagInfo({
 				action: 'write',
 				ndefPayload: payload,
 				tech: 'NDEF',
 				timestamp: now,
-				uid: alias.trim() || checkpointId.trim(),
+				uid: 'written-tag',
 			});
+
 			pushLog({
 				action: 'write',
 				id: `write-${now}`,
-				message: 'Payload escrito, acerca el tag para validar.',
+				message: 'Tag NFC escrito exitosamente',
 				timestamp: now,
 			});
-			Alert.alert('Tag listo','Acerca el tag al dispositivo para confirmar la escritura.');
+
+			// eslint-disable-next-line no-console
+			console.log('🔍 [WRITE] Ahora lee el tag para verificar la escritura');
+
+			Alert.alert(
+				'✅ Escritura completada',
+				'Ahora lee el tag con "Leer tag NFC" para verificar que los datos se escribieron correctamente.',
+				[{text: 'OK'}]
+			);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : 'No pudimos escribir en el tag NFC.';
 			setErrorMessage(message);
@@ -235,8 +317,9 @@ const ControlScreen: React.FC = () => {
 			});
 		} finally {
 			setMode('idle');
+			setWriteModalVisible(false);
 		}
-	},[alias,buildPayload,canWrite,checkpointId,mode,pushLog,supportState]);
+	},[buildPayload,canWrite,mode,pushLog,supportState]);
 
 	const busyLabel = useMemo(() => {
 		switch (mode) {
@@ -249,9 +332,107 @@ const ControlScreen: React.FC = () => {
 		}
 	},[mode]);
 
+	const renderCheckpointItem = useCallback(
+		({item}: {item: Checkpoint}) => (
+			<TouchableOpacity
+				activeOpacity={0.85}
+				onPress={() => handleSelectCheckpoint(item)}
+				style={[
+					styles.checkpointRow,
+					{backgroundColor: theme.background,borderColor: theme.border},
+				]}
+			>
+				<View style={styles.checkpointRowText}>
+					<Text style={[styles.checkpointRowTitle,{color: theme.textPrimary}]}>
+						{item.location}
+					</Text>
+					<Text style={[styles.checkpointRowSubtitle,{color: theme.textSecondary}]}>
+						ID: {item.id}
+					</Text>
+				</View>
+			</TouchableOpacity>
+		),
+		[handleSelectCheckpoint,theme],
+	);
+
+	const checkpointKeyExtractor = useCallback((item: Checkpoint) => item.id.toString(),[]);
+
+	const renderEmptyCheckpoints = useCallback(() => (
+		<View style={styles.modalEmpty}>
+			{isLoadingCheckpoints ? (
+				<ActivityIndicator color={theme.highlight} />
+			) : (
+				<Text style={[styles.checkpointRowSubtitle,{color: theme.textSecondary}]}>
+					No encontramos checkpoints disponibles.
+				</Text>
+			)}
+		</View>
+	),[isLoadingCheckpoints,theme]);
+
+	const renderCheckpointFooter = useCallback(() => {
+		if (!isFetchingNextPage) {
+			return null;
+		}
+		return (
+			<View style={styles.modalFooter}>
+				<ActivityIndicator color={theme.highlight} />
+			</View>
+		);
+	},[isFetchingNextPage,theme]);
+
 	return (
 		<CSafeAreaView edges={['top','bottom']} style={[styles.container,{backgroundColor: theme.background}]}>
 			<Header title="Control de Tags NFC" />
+			<Modal
+				animationType="slide"
+				onRequestClose={handleCloseCheckpointPicker}
+				transparent
+				visible={checkpointModalVisible}
+			>
+				<View style={styles.modalOverlay}>
+					<View
+						style={[
+							styles.modalContent,
+							{backgroundColor: theme.cardBackground,borderColor: theme.border},
+						]}
+					>
+						<Text style={[styles.modalTitle,{color: theme.textPrimary}]}>
+							Selecciona un checkpoint
+						</Text>
+						<FlatList<Checkpoint>
+							contentContainerStyle={styles.modalListContent}
+							data={checkpoints}
+							ItemSeparatorComponent={() => (
+								<View style={[styles.separator,{backgroundColor: theme.border}]} />
+							)}
+							keyboardShouldPersistTaps="handled"
+							keyExtractor={checkpointKeyExtractor}
+							ListEmptyComponent={renderEmptyCheckpoints}
+							ListFooterComponent={renderCheckpointFooter}
+							onEndReached={loadMoreCheckpoints}
+							onEndReachedThreshold={0.4}
+							renderItem={renderCheckpointItem}
+						/>
+						<PrimaryButton
+							label="Cerrar"
+							onPress={handleCloseCheckpointPicker}
+							style={styles.modalCloseButton}
+						/>
+					</View>
+				</View>
+			</Modal>
+
+			{/* Modal de escritura NFC */}
+			<ScanModal
+				isReady={true}
+				name={selectedCheckpoint?.location || 'Escribiendo tag NFC'}
+				onCancel={() => {
+					setWriteModalVisible(false);
+					setMode('idle');
+				}}
+				visible={writeModalVisible}
+			/>
+
 			<KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.flex}>
 				<ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
 					<Animated.View
@@ -302,16 +483,49 @@ const ControlScreen: React.FC = () => {
 						<Text style={[styles.cardTitle,{color: theme.textPrimary}]}>Generar payload</Text>
 						<Text style={[styles.helper,{color: theme.textSecondary}]}>Identifica el checkpoint y un alias opcional para el tag.</Text>
 						<View style={styles.inputGroup}>
-							<Text style={[styles.label,{color: theme.textSecondary}]}>Checkpoint ID</Text>
-							<TextInput
-								autoCapitalize="none"
-								autoCorrect={false}
-								onChangeText={setCheckpointId}
-								placeholder="Ej. CP-1234"
-								placeholderTextColor={`${theme.textSecondary}80`}
-								style={[styles.input,{borderColor: theme.border,color: theme.textPrimary}]}
-								value={checkpointId}
-							/>
+							<Text style={[styles.label,{color: theme.textSecondary}]}>Checkpoint</Text>
+							<TouchableOpacity
+								activeOpacity={0.85}
+								onPress={handleOpenCheckpointPicker}
+								style={[
+									styles.selectInput,
+									{
+										backgroundColor: theme.background,
+										borderColor: theme.border,
+									},
+								]}
+							>
+								<View style={styles.selectLabels}>
+									<Text
+										numberOfLines={1}
+										style={[
+											styles.selectText,
+											{color: theme.textPrimary},
+										]}
+									>
+										{selectedCheckpoint
+											? selectedCheckpoint.location
+											: isLoadingCheckpoints
+												? 'Cargando checkpoints...'
+												: 'Selecciona un checkpoint'}
+									</Text>
+									{selectedCheckpoint && (
+										<Text
+											style={[
+												styles.selectSecondary,
+												{color: theme.textSecondary},
+											]}
+										>
+											ID: {selectedCheckpoint.id}
+										</Text>
+									)}
+								</View>
+								{isLoadingCheckpoints ? (
+									<ActivityIndicator color={theme.highlight} size="small" />
+								) : (
+									<Text style={[styles.selectIndicator,{color: theme.textSecondary}]}>v</Text>
+								)}
+							</TouchableOpacity>
 						</View>
 						<View style={styles.inputGroup}>
 							<Text style={[styles.label,{color: theme.textSecondary}]}>Alias</Text>
@@ -360,7 +574,18 @@ const ControlScreen: React.FC = () => {
 							{tagInfo.ndefPayload && (
 								<>
 									<Text style={[styles.label,{color: theme.textSecondary}]}>Payload</Text>
-									<Text selectable style={[styles.value,{color: theme.textPrimary}]}>{tagInfo.ndefPayload}</Text>
+									<Text selectable style={[styles.payload,{color: theme.textPrimary}]}>
+										{(() => {
+											try {
+												// Intentar formatear como JSON si es válido
+												const parsed = JSON.parse(tagInfo.ndefPayload);
+												return JSON.stringify(parsed,null,2);
+											} catch {
+												// Si no es JSON válido, mostrar tal cual
+												return tagInfo.ndefPayload;
+											}
+										})()}
+									</Text>
 								</>
 							)}
 						</View>
@@ -416,6 +641,16 @@ const styles = StyleSheet.create({
 	},
 	cardHeader: {alignItems: 'center',flexDirection: 'row',gap: 8,marginBottom: 16},
 	cardTitle: {fontSize: 16,fontWeight: '600',marginBottom: 8},
+	checkpointRow: {
+		borderRadius: 12,
+		borderWidth: StyleSheet.hairlineWidth,
+		marginBottom: 4,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+	},
+	checkpointRowSubtitle: {fontSize: 13,marginTop: 4},
+	checkpointRowText: {flex: 1},
+	checkpointRowTitle: {fontSize: 16,fontWeight: '500'},
 	container: {flex: 1},
 	error: {fontSize: 14,fontWeight: '500',marginBottom: 16,textAlign: 'center'},
 	flex: {flex: 1},
@@ -429,6 +664,25 @@ const styles = StyleSheet.create({
 	logRow: {alignItems: 'center',flexDirection: 'row',gap: 12,marginBottom: 10},
 	logTextWrapper: {flex: 1},
 	logTimestamp: {fontSize: 12},
+	modalCloseButton: {marginTop: 16},
+	modalContent: {
+		borderRadius: 18,
+		borderWidth: StyleSheet.hairlineWidth,
+		maxHeight: '70%',
+		padding: 16,
+		width: '90%',
+	},
+	modalEmpty: {alignItems: 'center',justifyContent: 'center',minHeight: 140},
+	modalFooter: {alignItems: 'center',paddingVertical: 12},
+	modalListContent: {paddingBottom: 8},
+	modalOverlay: {
+		alignItems: 'center',
+		backgroundColor: 'rgba(0,0,0,0.45)',
+		flex: 1,
+		justifyContent: 'center',
+		padding: 16,
+	},
+	modalTitle: {fontSize: 18,fontWeight: '600',marginBottom: 8,textAlign: 'center'},
 	payload: {fontFamily: Platform.select({android: 'monospace',ios: 'Menlo'}),fontSize: 13,marginTop: 8},
 	payloadPreview: {marginTop: 8},
 	pulse: {
@@ -441,6 +695,21 @@ const styles = StyleSheet.create({
 		width: 120,
 	},
 	scroll: {padding: 16},
+	selectIndicator: {fontSize: 16,marginLeft: 12},
+	selectInput: {
+		alignItems: 'center',
+		borderRadius: 12,
+		borderWidth: StyleSheet.hairlineWidth,
+		flexDirection: 'row',
+		justifyContent: 'space-between',
+		marginTop: 6,
+		paddingHorizontal: 14,
+		paddingVertical: 12,
+	},
+	selectLabels: {flex: 1,marginRight: 12},
+	selectSecondary: {fontSize: 13,marginTop: 2},
+	selectText: {fontSize: 16,fontWeight: '500'},
+	separator: {height: 8},
 	statusCard: {alignItems: 'center',borderRadius: 20,borderWidth: StyleSheet.hairlineWidth,flexDirection: 'row',padding: 16},
 	statusSubtitle: {fontSize: 13,marginTop: 4},
 	statusTextBlock: {flex: 1,marginLeft: 16},

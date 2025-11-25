@@ -9,12 +9,13 @@ import {
 	View,
 } from 'react-native';
 
-import {CSafeAreaView} from '@/components/atoms';
+import {CSafeAreaView,Header} from '@/components/atoms';
 import {useAnnouncements} from '@/hooks/announcements/useGetAnnouncement';
 import {Paths} from '@/navigation/paths';
 import type {RootStackParamList} from '@/navigation/types';
 import type {AnnouncementListItem} from '@/types/announcements';
 import {AnnouncementItem} from '@/components/molecules';
+import {colors,darkTheme} from '@/assets/theme';
 
 
 export default function AnnouncementsListScreen() {
@@ -67,8 +68,11 @@ export default function AnnouncementsListScreen() {
 
 	return (
 		<CSafeAreaView style={styles.safe}>
+			<Header
+				onBackPress={() => navigation.goBack()}
+				title="Anuncios"
+			/>
 			<View style={styles.container}>
-				<Text style={styles.screenTitle}>Anuncios</Text>
 
 				{isLoading ? (
 					<View style={styles.loaderWrap}>
@@ -145,7 +149,7 @@ const styles = StyleSheet.create({
 	},
 	chipsRow: {flexDirection: 'row',gap: 8,marginTop: 8},
 	chipText: {color: '#9BA7B4',fontSize: 12},
-	container: {flex: 1,paddingHorizontal: 16,paddingTop: 8},
+	container: {flex: 1,paddingHorizontal: 16},
 	content: {
 		color: '#C8D2DE',
 		fontSize: 14,
@@ -182,13 +186,7 @@ const styles = StyleSheet.create({
 		marginTop: 10,
 	},
 	metaText: {color: '#8C99A7',fontSize: 12},
-	safe: {backgroundColor: '#0B0F12',flex: 1},
-	screenTitle: {
-		color: 'white',
-		fontSize: 22,
-		fontWeight: '700',
-		marginBottom: 12,
-	},
+	safe: {backgroundColor: darkTheme.background,flex: 1},
 	separator: {height: 12},
 	title: {color: '#EAF0F5',flex: 1,fontSize: 16,fontWeight: '700'},
 });

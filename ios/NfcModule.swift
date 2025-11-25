@@ -83,32 +83,105 @@ class NfcModule: NSObject, NFCTagReaderSessionDelegate {
 
       // Extrae UID según tecnología
       let uidHex: String
+      var ndefTag: NFCNDEFTag?
+      
       switch tag {
       case .miFare(let t):
         uidHex = t.identifier.map { String(format: "%02X", $0) }.joined()
+        ndefTag = t
       case .iso15693(let t):
         uidHex = t.identifier.map { String(format: "%02X", $0) }.joined()
+        ndefTag = t
       case .iso7816(let t):
         uidHex = t.identifier.map { String(format: "%02X", $0) }.joined()
+        ndefTag = t
       case .feliCa(let t):
         uidHex = t.currentIDm.map { String(format: "%02X", $0) }.joined()
+        ndefTag = t
       @unknown default:
         uidHex = ""
       }
 
-      // Intento de leer primer registro NDEF (si existe) vía polling NDEF (opcional)
-      // CoreNFC con Tag Reader no expone NDEF Records de forma directa en todos los casos.
-      // Mantendremos return mínimo con uid + tipo; si necesitas NDEF, podemos cambiar a NFCNDEFReaderSession.
-      let result: [String: Any] = [
-        "uid": uidHex,
-        "tech": "\(tag)" // descripción simple (MiFare/ISO15693/etc.)
-      ]
-
-      self.resolve?(result)
-
-      session.alertMessage = "Tag leído correctamente."
-      session.invalidate()
-      self.cleanup()
+      // Intenta leer mensaje NDEF si el tag lo soporta
+      if let ndef = ndefTag {
+        ndef.queryNDEFStatus { status, capacity, error in
+          if let error = error {
+            // Si falla la lectura NDEF, devolver solo UID y tech
+            let result: [String: Any] = [
+              "uid": uidHex,
+              "tech": "\(tag)"
+            ]
+            self.resolve?(result)
+            session.alertMessage = "Tag leído correctamente."
+            session.invalidate()
+            self.cleanup()
+            return
+          }
+          
+          // Si el tag soporta NDEF, intenta leerlo
+          if status == .readWrite || status == .readOnly {
+            ndef.readNDEF { message, error in
+              var result: [String: Any] = [
+                "uid": uidHex,
+                "tech": "\(tag)"
+              ]
+              
+              // Si hay mensaje NDEF, extraer el primer record
+              if let message = message, let firstRecord = message.records.first {
+                let typeString = String(data: firstRecord.type, encoding: .utf8) ?? ""
+                
+                // Para MIME types (application/json), el payload es directo
+                // Para Text records, hay que skipear el primer byte (language code)
+                var payloadString = ""
+                if typeString.contains("json") || typeString == "application/json" {
+                  // MIME type - payload directo
+                  payloadString = String(data: firstRecord.payload, encoding: .utf8) ?? ""
+                } else if firstRecord.typeNameFormat == .nfcWellKnown {
+                  // Text record - skipear primer byte
+                  if firstRecord.payload.count > 1 {
+                    let actualPayload = firstRecord.payload.subdata(in: 1..<firstRecord.payload.count)
+                    payloadString = String(data: actualPayload, encoding: .utf8) ?? ""
+                  }
+                } else {
+                  // Otros tipos - intentar leer directo
+                  payloadString = String(data: firstRecord.payload, encoding: .utf8) ?? ""
+                }
+                
+                let ndefDict: [String: Any] = [
+                  "type": typeString,
+                  "payload": payloadString
+                ]
+                result["ndef"] = ndefDict
+              }
+              
+              self.resolve?(result)
+              session.alertMessage = "Tag leído correctamente."
+              session.invalidate()
+              self.cleanup()
+            }
+          } else {
+            // Tag no soporta NDEF o está vacío
+            let result: [String: Any] = [
+              "uid": uidHex,
+              "tech": "\(tag)"
+            ]
+            self.resolve?(result)
+            session.alertMessage = "Tag leído correctamente."
+            session.invalidate()
+            self.cleanup()
+          }
+        }
+      } else {
+        // El tag no soporta NDEF
+        let result: [String: Any] = [
+          "uid": uidHex,
+          "tech": "\(tag)"
+        ]
+        self.resolve?(result)
+        session.alertMessage = "Tag leído correctamente."
+        session.invalidate()
+        self.cleanup()
+      }
     }
   }
 

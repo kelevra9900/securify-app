@@ -1,11 +1,10 @@
 // src/screens/AnnouncementDetailScreen.tsx
-import type { Paths } from '@/navigation/paths';
+import type {Paths} from '@/navigation/paths';
 // 📌 Cambia estos hooks por los tuyos reales:
-import type { RootScreenProps } from '@/navigation/types';
+import type {RootScreenProps} from '@/navigation/types';
 
-import { useNavigation, useRoute } from '@react-navigation/native';
-import { MotiView } from 'moti';
-import React, { useCallback, useEffect, useMemo } from 'react';
+import {useNavigation,useRoute} from '@react-navigation/native';
+import React,{useCallback,useEffect,useMemo} from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -17,17 +16,18 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
-import { useAnnouncement } from '@/hooks/announcements/useGetAnnouncement';
+import {useAnnouncement} from '@/hooks/announcements/useGetAnnouncement';
 
-import { CSafeAreaView, Header } from '@/components/atoms';
+import {CSafeAreaView,Header} from '@/components/atoms';
 
-import { darkTheme } from '@/assets/theme';
+import {darkTheme} from '@/assets/theme';
+import {useTheme} from '@/context/Theme';
 
 // Tipado de lo que esperamos del backend para este detalle
 export type AnnouncementDetail = {
-  author?: { id: number; name: string } | null; // opcional
+  author?: {id: number; name: string} | null; // opcional
   content: string;
   createdAt: string; // ISO
   environmentName?: null | string; // opcional
@@ -40,11 +40,13 @@ export type AnnouncementDetail = {
 type RouteProps = RootScreenProps<Paths.Announcement>['route'];
 
 export default function AnnouncementDetailScreen() {
-  const { params } = useRoute<RouteProps>();
+  const {theme} = useTheme();
+
+  const {params} = useRoute<RouteProps>();
   const navigation = useNavigation();
   const insets = useSafeAreaInsets();
 
-  const { data, isError, isLoading, refetch } = useAnnouncement(params.id);
+  const {data,isError,isLoading,refetch} = useAnnouncement(params.id);
   const item = data as AnnouncementDetail | undefined;
 
   const onShare = useCallback(async (ann?: AnnouncementDetail) => {
@@ -53,38 +55,38 @@ export default function AnnouncementDetailScreen() {
     }
     try {
       await Share.share({
-        message: `${ann.title}\n\n${truncate(ann.content, 180)}${annLink(ann.id)}`,
+        message: `${ann.title}\n\n${truncate(ann.content,180)}${annLink(ann.id)}`,
         title: ann.title,
       });
-    } catch {}
-  }, []);
+    } catch { }
+  },[]);
 
   // Botón de compartir en el header
   useEffect(() => {
     navigation.setOptions?.({
       headerRight: () => (
         <TouchableOpacity hitSlop={8} onPress={() => onShare(item)}>
-          <Text style={{ color: darkTheme.highlight, fontWeight: '700' }}>
+          <Text style={{color: darkTheme.highlight,fontWeight: '700'}}>
             Compartir
           </Text>
         </TouchableOpacity>
       ),
     });
-  }, [navigation, item, onShare]);
+  },[navigation,item,onShare]);
 
   const dateLabel = useMemo(() => {
     if (!item?.createdAt) {
       return '';
     }
     const d = new Date(item.createdAt);
-    return d.toLocaleString('es-MX', {
+    return d.toLocaleString('es-MX',{
       day: '2-digit',
       hour: '2-digit',
       minute: '2-digit',
       month: 'short',
       year: 'numeric',
     });
-  }, [item?.createdAt]);
+  },[item?.createdAt]);
 
   if (isLoading) {
     return (
@@ -112,39 +114,33 @@ export default function AnnouncementDetailScreen() {
   return (
     <CSafeAreaView
       edges={['top']}
-      style={{ backgroundColor: darkTheme.background, flex: 1 }}
+      style={{backgroundColor: theme.background,flex: 1}}
     >
-      <Header title="Anuncio" />
+      <Header
+        onBackPress={() => navigation.goBack()}
+        title="Anuncio"
+      />
 
       <ScrollView
         contentContainerStyle={[
           styles.scroll,
-          { paddingBottom: Math.max(16, insets.bottom + 24) },
+          {paddingBottom: Math.max(16,insets.bottom + 24)},
         ]}
         showsVerticalScrollIndicator={false}
       >
         {/* Imagen principal */}
         {Boolean(item.image) && (
-          <MotiView
-            animate={{ opacity: 1, translateY: 0 }}
-            from={{ opacity: 0.0, translateY: 8 }}
-            style={styles.heroWrap}
-            transition={{ duration: 250, type: 'timing' }}
-          >
+          <View style={styles.heroWrap}>
             <Image
               resizeMode="cover"
-              source={{ uri: item.image! }}
+              source={{uri: item.image!}}
               style={styles.hero}
             />
-          </MotiView>
+          </View>
         )}
 
         {/* Título */}
-        <MotiView
-          animate={{ opacity: 1, translateY: 0 }}
-          from={{ opacity: 0, translateY: 6 }}
-          transition={{ delay: 80, duration: 200, type: 'timing' }}
-        >
+        <View>
           <Text style={styles.title}>{item.title}</Text>
 
           {/* Metadata */}
@@ -164,18 +160,13 @@ export default function AnnouncementDetailScreen() {
           {!!item.author?.name && (
             <Text style={styles.author}>Por {item.author.name}</Text>
           )}
-        </MotiView>
+        </View>
 
         {/* Contenido */}
-        <MotiView
-          animate={{ opacity: 1 }}
-          from={{ opacity: 0 }}
-          style={{ marginTop: 12 }}
-          transition={{ delay: 120, duration: 220, type: 'timing' }}
-        >
+        <View style={{marginTop: 12}}>
           {/* Si usas markdown, sustituye este bloque por tu renderer */}
           <Paragraph text={item.content} />
-        </MotiView>
+        </View>
 
         {/* (Opcional) Enlaces detectados simples */}
         {!!firstUrl(item.content) && (
@@ -194,20 +185,20 @@ export default function AnnouncementDetailScreen() {
 
 /* ───────────────────────────── Atoms ───────────────────────────── */
 
-function Chip({ text, tone }: { text: string; tone: 'idle' | 'ok' | 'warn' }) {
+function Chip({text,tone}: {text: string; tone: 'idle' | 'ok' | 'warn'}) {
   const bg =
     tone === 'ok' ? '#2ecc7133' : tone === 'warn' ? '#f39c1233' : '#2a2a2a';
   const bd =
     tone === 'ok' ? '#2ecc71' : tone === 'warn' ? '#f39c12' : darkTheme.border;
 
   return (
-    <View style={[styles.chip, { backgroundColor: bg, borderColor: bd }]}>
+    <View style={[styles.chip,{backgroundColor: bg,borderColor: bd}]}>
       <Text style={styles.chipText}>{text}</Text>
     </View>
   );
 }
 
-function Paragraph({ text }: { text: string }) {
+function Paragraph({text}: {text: string}) {
   // Render simple: párrafos separados por doble salto de línea
   const blocks = useMemo(
     () =>
@@ -218,8 +209,8 @@ function Paragraph({ text }: { text: string }) {
     [text],
   );
   return (
-    <View style={{ gap: 10 }}>
-      {blocks.map((b, i) => (
+    <View style={{gap: 10}}>
+      {blocks.map((b,i) => (
         <Text key={i} style={styles.contentText}>
           {b}
         </Text>
@@ -233,11 +224,11 @@ function Paragraph({ text }: { text: string }) {
 function estimateReadingTime(s: string) {
   const words = s.trim().split(/\s+/).length || 0;
   const wpm = 200; // castellano promedio
-  return Math.max(1, Math.round(words / wpm));
+  return Math.max(1,Math.round(words / wpm));
 }
 
-function truncate(s: string, n: number) {
-  return s.length > n ? s.slice(0, n - 1) + '… ' : s;
+function truncate(s: string,n: number) {
+  return s.length > n ? s.slice(0,n - 1) + '… ' : s;
 }
 
 function annLink(id: number) {
@@ -311,7 +302,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
   },
-  linkBtnText: { color: darkTheme.textPrimary, fontWeight: '700' },
+  linkBtnText: {color: darkTheme.textPrimary,fontWeight: '700'},
   metaRow: {
     alignItems: 'center',
     flexDirection: 'row',
@@ -320,9 +311,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
 
-  scroll: { padding: 16 },
+  scroll: {padding: 16},
 
-  text: { color: darkTheme.textPrimary, marginTop: 8 },
+  text: {color: darkTheme.textPrimary,marginTop: 8},
   title: {
     color: darkTheme.textPrimary,
     fontSize: 20,

@@ -236,7 +236,7 @@ export async function startTracking(
   const mod = getTrackingModule();
   const namespace = normalizeNamespace(opts.namespace);
   const eventName = opts.eventName ?? 'new_location';
-  const realtimeEvent = opts.realtimeEventName ?? 'update_location';
+  const realtimeEvent = opts.realtimeEventName ?? 'tracking:location:update';
   const realtimeMinDistance = opts.realtimeMinDistanceMeters ?? 1;
 
   if (Platform.OS === 'android') {

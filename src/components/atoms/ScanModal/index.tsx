@@ -1,4 +1,4 @@
-import { MotiView } from 'moti';
+import {MotiView} from 'moti';
 import {
   ActivityIndicator,
   Modal,
@@ -8,13 +8,15 @@ import {
   View,
 } from 'react-native';
 
-import { darkTheme } from '@/assets/theme';
+import {darkTheme} from '@/assets/theme';
 
 function ScanModal({
+  isReady = false,
   name,
   onCancel,
   visible,
 }: {
+  isReady?: boolean;
   name: string;
   onCancel: () => void;
   visible: boolean;
@@ -28,19 +30,24 @@ function ScanModal({
     >
       <View style={styles.modalBackdrop}>
         <MotiView
-          animate={{ opacity: 1, scale: 1 }}
-          from={{ opacity: 0, scale: 0.95 }}
+          animate={{opacity: 1,scale: 1}}
+          from={{opacity: 0,scale: 0.95}}
           style={styles.modalCard}
-          transition={{ duration: 200, type: 'timing' }}
+          transition={{duration: 200,type: 'timing'}}
         >
-          <Text style={styles.modalTitle}>Acerca el teléfono al NFC</Text>
+          <Text style={styles.modalTitle}>
+            {isReady ? '✅ Acerca el tag NFC ahora' : '⏳ Preparando escaneo...'}
+          </Text>
           <Text numberOfLines={2} style={styles.modalMeta}>
-            Checkpoint: {name}
+            {isReady
+              ? `Checkpoint: ${name}`
+              : 'NO acerques el tag aún, espera un momento'
+            }
           </Text>
 
-          <View style={{ height: 16 }} />
+          <View style={{height: 16}} />
           <ActivityIndicator color={darkTheme.highlight} />
-          <View style={{ height: 16 }} />
+          <View style={{height: 16}} />
 
           <TouchableOpacity
             activeOpacity={0.85}
@@ -71,7 +78,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
-  modalBtnText: { color: darkTheme.textPrimary, fontWeight: '700' },
+  modalBtnText: {color: darkTheme.textPrimary,fontWeight: '700'},
   modalCard: {
     backgroundColor: darkTheme.cardBackground,
     borderColor: darkTheme.border,
@@ -81,8 +88,8 @@ const styles = StyleSheet.create({
     width: '86%',
   },
 
-  modalMeta: { color: darkTheme.textSecondary, fontSize: 12, marginTop: 6 },
-  modalTitle: { color: darkTheme.textPrimary, fontSize: 16, fontWeight: '700' },
+  modalMeta: {color: darkTheme.textSecondary,fontSize: 12,marginTop: 6},
+  modalTitle: {color: darkTheme.textPrimary,fontSize: 16,fontWeight: '700'},
 });
 
 export default ScanModal;

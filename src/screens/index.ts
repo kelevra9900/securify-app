@@ -8,6 +8,7 @@ export {default as DocumentsScreen} from './Documents';
 export {default as FaceCameraScreen} from './FaceCamera';
 export {default as LogoutScreen} from './FaceCamera/logout'
 export {default as NotificationsScreen} from './Notifications';
+export {default as PermissionsScreen} from './Permissions';
 export {default as ChatDetailScreen} from './Root/Chat/detail';
 export {default as CreateReportScreen} from './Root/Reports/create';
 export {default as AlertDetailScreen} from './Root/Reports/details';

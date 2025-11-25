@@ -23,6 +23,7 @@ type StoredCredentials = {
 interface RefreshTokenResponse {
   accessToken?: string;
   jwt?: string;
+
   refreshToken?: string;
   token?: string;
 }

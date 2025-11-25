@@ -1,27 +1,27 @@
-import type { InfiniteData } from '@tanstack/react-query';
-import type { AttendanceDTO } from '@/data/services/attendances';
-import type { Page } from '@/types/pagination';
+import type {InfiniteData} from '@tanstack/react-query';
+import type {AttendanceDTO} from '@/data/services/attendances';
+import type {Page} from '@/types/pagination';
 
-import { useInfiniteQuery } from '@tanstack/react-query';
+import {useInfiniteQuery} from '@tanstack/react-query';
 
-import { getAttendances } from '@/data/services/attendances';
+import {getAttendances} from '@/data/services/attendances';
+import type {Vars} from '@/types/global';
 
 // Ajusta a tus tipos reales
 
-type Vars = { cursor?: number; from?: string; limit?: number; to?: string };
 
-export function useAttendancesInfinite(params?: Omit<Vars, 'cursor'>) {
+export function useAttendancesInfinite(params?: Omit<Vars,'cursor'>) {
   return useInfiniteQuery<
     Page<AttendanceDTO>, // TData (cada página)
     Error, // TError
     InfiniteData<Page<AttendanceDTO>>, // TQueryFnData (lo que llega a `data`)
-    readonly ['attendances', Omit<Vars, 'cursor'> | undefined], // TQueryKey
+    readonly ['attendances',Omit<Vars,'cursor'> | undefined], // TQueryKey
     number | undefined // TPageParam
   >({
     initialPageParam: undefined,
-    queryKey: ['attendances', params] as const,
+    queryKey: ['attendances',params] as const,
     // Trae una página usando el cursor (pageParam)
-    queryFn: async ({ pageParam }) => {
+    queryFn: async ({pageParam}) => {
       const cursor = typeof pageParam === 'number' ? pageParam : undefined;
       return getAttendances({
         cursor,

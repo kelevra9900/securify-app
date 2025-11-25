@@ -33,6 +33,8 @@ import {clearCredentials} from '@/store/reducers/auth';
 import {clearProfile} from '@/store/reducers/user';
 import {disposeChatSocket} from '@/lib/socket/chat';
 import {useAppDispatch} from '@/hooks/store';
+import {useQueryClient} from '@tanstack/react-query';
+import {MMKV_KEYS, storage} from '@/utils/storage';
 
 type Props = {
 	navigation: RootScreenProps<Paths.FaceCameraLogout>['navigation'];
@@ -46,6 +48,7 @@ const FaceCameraLogout = ({navigation}: Props) => {
 	const cameraRef = useRef<CameraRefType>(null);
 	const rtoken = useSelector((state: RootState) => state.auth.refreshToken);
 	const dispatch = useAppDispatch();
+	const queryClient = useQueryClient();
 
 	const [isTakingPhoto,setIsTakingPhoto] = useState(false);
 	const [isGettingLocation,setIsGettingLocation] = useState(false);
@@ -124,13 +127,30 @@ const FaceCameraLogout = ({navigation}: Props) => {
 						console.error('Reconocimiento falló',err);
 						flashInfo('Error','No se pudo procesar el reconocimiento facial.');
 					},
-					onSuccess: () => {
-						dispatch(clearCredentials());
-						dispatch(clearProfile());
-						stopTracking();
-						disposeChatSocket();
-						navigation.replace(Paths.SectorSelector);
-					},
+				onSuccess: () => {
+					// 1) Limpiar Query Cache del perfil
+					try {
+						queryClient.removeQueries({queryKey: ['current_user']});
+						queryClient.removeQueries({queryKey: ['me']});
+						queryClient.clear();
+					} catch { }
+
+					// 2) Limpiar MMKV storage del usuario
+					try {
+						storage.delete(MMKV_KEYS.user);
+					} catch { }
+
+					// 3) Limpiar Redux
+					dispatch(clearCredentials());
+					dispatch(clearProfile());
+
+					// 4) Limpiar tracking y sockets
+					stopTracking();
+					disposeChatSocket();
+
+					// 5) Navegar
+					navigation.replace(Paths.SectorSelector);
+				},
 				},
 			);
 		} catch (error) {

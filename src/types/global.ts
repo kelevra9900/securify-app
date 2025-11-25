@@ -1,0 +1,1 @@
+export type Vars = {cursor?: number; from?: string; limit?: number; page?: string; to?: string,};

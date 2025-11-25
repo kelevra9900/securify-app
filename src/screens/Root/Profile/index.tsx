@@ -9,6 +9,7 @@ import {
   LogOut,
   Nfc,
   Shield,
+  Settings,
   User
 } from 'lucide-react-native';
 import {MotiView} from 'moti';
@@ -78,6 +79,11 @@ const ProfileScreen = () => {
       icon: Bell,
       label: 'Notificaciones',
       onPress: () => navigation.navigate(Paths.Notifications),
+    },
+    {
+      icon: Settings,
+      label: 'Permisos',
+      onPress: () => navigation.navigate(Paths.Permissions),
     },
     {
       icon: LogOut,
@@ -162,7 +168,7 @@ const ProfileScreen = () => {
         {/* LISTA DE OPCIONES */}
         <View style={styles.optionsContainer}>
           {
-            profile?.user.role === 'ADMIN' || profile?.user.role === 'SUPER_ADMIN' && (
+            profile?.user.role === 'ADMIN' || profile?.user.role === 'SUPER_ADMIN' ? (
               <Pressable
                 android_ripple={{color: theme.border}}
                 onPress={() => {
@@ -180,7 +186,7 @@ const ProfileScreen = () => {
                 </TextLabel>
                 <ChevronRight color={theme.textSecondary} size={20} />
               </Pressable>
-            )
+            ) : null
           }
           {isPending
             ? [0,1,2,3].map((i) => (

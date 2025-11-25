@@ -16,6 +16,6 @@ export function useGetHomeData(params?: HomeQuery) {
 		refetchOnMount: false,
 		refetchOnReconnect: true,
 		refetchOnWindowFocus: false,
-		staleTime: 120_000,
+		staleTime: 30_000,
 	});
 }

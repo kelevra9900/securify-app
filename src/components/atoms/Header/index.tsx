@@ -6,17 +6,18 @@ import {useNavigation} from '@react-navigation/native';
 import {useTheme} from '@/context/Theme';
 
 type Props = {
+	onBackPress?: () => void;
 	rightSlot?: React.ReactNode;
 	title: string;
 };
 
-const Header = ({rightSlot = undefined,title}: Props) => {
+const Header = ({onBackPress = undefined,rightSlot = undefined,title}: Props) => {
 	const navigation = useNavigation();
 	const {theme} = useTheme();
 
 	return (
 		<View style={[styles.container,{backgroundColor: theme.background,borderBottomColor: theme.border}]}>
-			<TouchableOpacity hitSlop={{bottom: 8,left: 8,right: 8,top: 8}} onPress={() => navigation.goBack()}>
+			<TouchableOpacity hitSlop={{bottom: 8,left: 8,right: 8,top: 8}} onPress={onBackPress ?? (() => navigation.goBack())}>
 				<ArrowLeft color={theme.textPrimary} size={24} />
 			</TouchableOpacity>
 

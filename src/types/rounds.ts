@@ -1,8 +1,14 @@
 export type RoundListItem = {
   checkpoints: Checkpoint[];
+  completedCheckpoints?: number; // Checkpoints completados en lap actual
+  completedLaps?: number; // Número de vueltas completadas
+  currentLap?: number; // Vuelta actual (1, 2, 3...)
   endISO: null | string;
   id: number;
+  isCompleted?: boolean; // Si el lap actual está completo
+  isCyclic?: boolean; // Si la ronda es cíclica (puede reiniciarse)
   name: string;
+  progressLabel?: string; // "3/6 (Vuelta 2)"
   startISO: string;
   status: RoundStatus;
   totalCheckpoints: number;
@@ -22,17 +28,20 @@ export type RoundDetail = {
   }[];
   endISO: null | string;
   id: number;
-  logs: { checkpointId: number; timestampISO: string }[];
+  logs: {checkpointId: number; timestampISO: string}[];
   name: string;
   remainingMinutes: null | number;
   startISO: string;
 };
 
 export type PastRound = {
+  completedCheckpoints?: number;
   date: string; // ya formateada en pantalla (ej: "21 junio, 06:00 AM")
   id: string;
+  isCyclic?: boolean; // Si la ronda puede reiniciarse
   name: string;
   status: 'completed' | 'incomplete';
+  totalCheckpoints?: number;
 };
 
 export function mapPastStatus(s: RoundListItem['status']): PastRound['status'] {
@@ -50,6 +59,8 @@ export type RoundCheckpoint = {
 };
 
 export type RoundProgress = {
+  completedLaps?: number; // Número de vueltas completadas
+  currentLap?: number; // Vuelta actual (1, 2, 3...)
   done: number;
   total: number;
 };

@@ -47,8 +47,8 @@ class TrackingService : Service() {
     private val DEFAULT_FASTEST_INTERVAL_MS = TimeUnit.SECONDS.toMillis(5)
     private const val DEFAULT_MIN_DISTANCE = 5f
     private const val DEFAULT_EVENT = "new_location"
-    private const val DEFAULT_REALTIME_EVENT = "update_location"
-    private const val DEFAULT_NAMESPACE = "/tracker"
+    private const val DEFAULT_REALTIME_EVENT = "tracking:location:update"
+    private const val DEFAULT_NAMESPACE = "/tracker/v2"
     private const val MAX_BUFFER = 300
     private const val TAG = "TrackingService"
   }
@@ -110,6 +110,21 @@ class TrackingService : Service() {
 
   @RequiresPermission(allOf = [Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION])
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+    // CRÍTICO: Llamar a startForeground() INMEDIATAMENTE para cumplir con el requisito de Android 8+
+    // que exige que se llame dentro de los primeros 5 segundos de startForegroundService()
+    if (intent?.action != ACTION_STOP) {
+      try {
+        startForeground(
+          NOTIF_ID,
+          notificationBuilder
+            .setContentText("Servicio de rastreo activo...")
+            .build()
+        )
+      } catch (e: Exception) {
+        Log.e(TAG, "Error calling startForeground in onStartCommand", e)
+      }
+    }
+
     when (intent?.action ?: ACTION_START) {
       ACTION_STOP -> {
         Log.i(TAG, "Received ACTION_STOP")

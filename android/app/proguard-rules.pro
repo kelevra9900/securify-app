@@ -8,3 +8,18 @@
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
 # Add any project specific keep options here:
+
+# Keep React Native modules
+-keep class com.securify.app.NfcModule { *; }
+-keep class com.securify.app.TrackingModule { *; }
+-keep class com.securify.app.GeolocationModule { *; }
+-keep class com.securify.app.TrackingPackage { *; }
+
+# Keep all React Native bridge methods
+-keepclassmembers class * {
+    @com.facebook.react.bridge.ReactMethod <methods>;
+}
+
+# Keep NFC classes
+-keep class android.nfc.** { *; }
+-keep class android.nfc.tech.** { *; }

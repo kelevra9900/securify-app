@@ -1,0 +1,4 @@
+Nueva versión de la aplicación
+
+Mejoras y correcciones de errores.
+

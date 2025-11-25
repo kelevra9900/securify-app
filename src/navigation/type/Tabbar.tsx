@@ -15,8 +15,6 @@ import {
 } from 'react-native';
 import {useSelector} from 'react-redux';
 
-import {usePanicFAB} from '@/hooks/UI/usePanicFAB';
-
 import {CSafeAreaView,PanicFAB,TextLabel} from '@/components/atoms';
 import {
   ChatScreen,
@@ -37,8 +35,8 @@ import {
 } from '@/utils/tracking';
 
 import {Paths} from '../paths';
+import {usePanicFAB} from '@/hooks/UI/usePanicFAB';
 import {useCreateAlert} from '@/hooks/alerts/useCreateAlert';
-import type {FormValues} from '@/screens/Root/Reports/create';
 import {tryGetCurrentLatLng} from '@/utils/location';
 import {showToast} from '@/utils/toast';
 
@@ -67,93 +65,109 @@ const TAB_CONFIG = [
   },
 ];
 
+type CustomTabBarProps = {
+  onPanicPress: () => void;
+  panicLoading: boolean;
+} & BottomTabBarProps;
+
 const CustomTabBar = ({
   descriptors,
   navigation,
+  onPanicPress,
+  panicLoading,
   state,
-}: BottomTabBarProps) => {
+}: CustomTabBarProps) => {
   const {theme} = useTheme();
+  const token = useSelector((state: RootState) => state.auth.token);
+
+  usePanicFAB(token);
 
   return (
-    <View
-      style={[
-        styles.tabBar,
-        {backgroundColor: theme.background,borderTopColor: theme.border},
-      ]}
-    >
-      {state.routes.map((route,index) => {
-        const isFocused = state.index === index;
-        const {options} = descriptors[route.key];
-        const label = options.tabBarLabel ?? options.title ?? route.name;
-        const Icon = TAB_CONFIG.find((tab) => tab.name === route.name)?.icon;
+    <>
+      <View
+        style={[
+          styles.tabBar,
+          {backgroundColor: theme.background,borderTopColor: theme.border},
+        ]}
+      >
+        {state.routes.map((route,index) => {
+          const isFocused = state.index === index;
+          const {options} = descriptors[route.key];
+          const label = options.tabBarLabel ?? options.title ?? route.name;
+          const Icon = TAB_CONFIG.find((tab) => tab.name === route.name)?.icon;
 
-        const animation = React.useRef(
-          new Animated.Value(isFocused ? 1 : 0),
-        ).current;
+          const animation = React.useRef(
+            new Animated.Value(isFocused ? 1 : 0),
+          ).current;
 
-        useEffect(() => {
-          Animated.timing(animation,{
-            duration: 250,
-            toValue: isFocused ? 1 : 0,
-            useNativeDriver: true,
-          }).start();
-          // eslint-disable-next-line react-hooks/exhaustive-deps
-        },[isFocused]);
+          useEffect(() => {
+            Animated.timing(animation,{
+              duration: 250,
+              toValue: isFocused ? 1 : 0,
+              useNativeDriver: true,
+            }).start();
+            // eslint-disable-next-line react-hooks/exhaustive-deps
+          },[isFocused]);
 
-        const animatedStyle = {
-          opacity: animation,
-          transform: [{scaleX: animation}],
-        };
+          const animatedStyle = {
+            opacity: animation,
+            transform: [{scaleX: animation}],
+          };
 
-        return (
-          <TouchableOpacity
-            key={route.key}
-            onPress={() => {
-              const event = navigation.emit({
-                canPreventDefault: true,
-                target: route.key,
-                type: 'tabPress',
-              });
+          return (
+            <TouchableOpacity
+              key={route.key}
+              onPress={() => {
+                const event = navigation.emit({
+                  canPreventDefault: true,
+                  target: route.key,
+                  type: 'tabPress',
+                });
 
-              if (!isFocused && !event.defaultPrevented) {
-                navigation.navigate(route.name as keyof TabParamList);
-              }
-            }}
-            style={styles.tabButton}
-          >
-            <Animated.View
-              style={[
-                styles.animatedTopBorder,
-                animatedStyle,
-                {backgroundColor: theme.highlight},
-              ]}
-            />
-            {Icon && (
-              <Icon
-                color={isFocused ? theme.highlight : theme.textSecondary}
-                height={24}
-                strokeWidth={1.8}
-                style={styles.icon}
-                width={24}
-              />
-            )}
-            <TextLabel
-              color={isFocused ? theme.highlight : theme.textSecondary}
-              type="M12"
+                if (!isFocused && !event.defaultPrevented) {
+                  navigation.navigate(route.name as keyof TabParamList);
+                }
+              }}
+              style={styles.tabButton}
             >
-              {typeof label === 'function'
-                ? label({
-                  children: '',
-                  color: isFocused ? theme.highlight : theme.textSecondary,
-                  focused: isFocused,
-                  position: 'below-icon',
-                })
-                : label}
-            </TextLabel>
-          </TouchableOpacity>
-        );
-      })}
-    </View>
+              <Animated.View
+                style={[
+                  styles.animatedTopBorder,
+                  animatedStyle,
+                  {backgroundColor: theme.highlight},
+                ]}
+              />
+              {Icon && (
+                <Icon
+                  color={isFocused ? theme.highlight : theme.textSecondary}
+                  height={24}
+                  strokeWidth={1.8}
+                  style={styles.icon}
+                  width={24}
+                />
+              )}
+              <TextLabel
+                color={isFocused ? theme.highlight : theme.textSecondary}
+                type="M12"
+              >
+                {typeof label === 'function'
+                  ? label({
+                    children: '',
+                    color: isFocused ? theme.highlight : theme.textSecondary,
+                    focused: isFocused,
+                    position: 'below-icon',
+                  })
+                  : label}
+              </TextLabel>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      <PanicFAB
+        loading={panicLoading}
+        onPress={onPanicPress}
+      />
+    </>
   );
 };
 
@@ -204,7 +218,7 @@ export default function TabNavigation() {
       }
 
       const SOCKET_BASE = API_URL; // o SOCKET_URL si tienes otro host/puerto
-      const NAMESPACE = '/tracker';
+      const NAMESPACE = '/tracker/v2';
 
       if (token) {
         const res = await startTracking({
@@ -275,7 +289,13 @@ export default function TabNavigation() {
     >
       <Tab.Navigator
         screenOptions={{headerShown: false}}
-        tabBar={(props) => <CustomTabBar {...props} />}
+        tabBar={(props) => (
+          <CustomTabBar
+            {...props}
+            onPanicPress={onSubmit}
+            panicLoading={isPending}
+          />
+        )}
       >
         {TAB_CONFIG.map((tab) => (
           <Tab.Screen
@@ -287,11 +307,6 @@ export default function TabNavigation() {
           />
         ))}
       </Tab.Navigator>
-      <PanicFAB
-        loading={isPending}
-        onPress={() => {
-          onSubmit()
-        }} />
     </CSafeAreaView>
   );
 }

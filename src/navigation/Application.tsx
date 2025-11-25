@@ -21,6 +21,7 @@ import {
   LoginWithCredentials,
   LogoutScreen,
   NotificationsScreen,
+  PermissionsScreen,
   PreviewRound,
   RoundWalkScreen,
   SectorSelector,
@@ -33,6 +34,7 @@ import {ThemeProvider} from '@/context/Theme';
 
 import {Paths} from './paths';
 import TabBarNavigation from './type/Tabbar';
+import AppInitializer from '@/initializers/AppInitializer';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -42,6 +44,7 @@ function ApplicationNavigator() {
       <ThemeProvider>
         <NavigationContainer>
           <View style={{backgroundColor: colors.background,flex: 1}}>
+            <AppInitializer />
             <Stack.Navigator
               initialRouteName={Paths.Splash}
               screenOptions={{headerShown: false}}
@@ -78,6 +81,10 @@ function ApplicationNavigator() {
               <Stack.Screen
                 component={NotificationsScreen}
                 name={Paths.Notifications}
+              />
+              <Stack.Screen
+                component={PermissionsScreen}
+                name={Paths.Permissions}
               />
               <Stack.Screen
                 component={AttendancesScreen}

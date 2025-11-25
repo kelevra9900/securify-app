@@ -89,7 +89,7 @@ export function useTrackSocket(token: null | string) {
 		lastRealtimeEmitRef.current = now;
 
 		const payload: LocationPayload = {latitude,longitude};
-		socket.emit("update_location",payload);
+		socket.emit("tracking:location:update",payload);
 	}
 
 	return {connected,sendLocation,sendRealtimeLocation,socket};

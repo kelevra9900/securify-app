@@ -72,6 +72,9 @@ export const colors = {
 	warning: '#F6D466',
 	white: '#FFFFFF',
 	yellowColor1: '#FECD00',
+	yellowColor2: '#F6D466',
+	// Yellow light
+	yellowLight: '#FFF8E1',
 
 	// Button Colors
 	bColor1: '#EDEDED',

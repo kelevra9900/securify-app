@@ -1,15 +1,24 @@
 // src/screens/RoundsHomeScreen.tsx
-import React from 'react';
+import type {NavigationProp} from '@react-navigation/native';
+import type {RootStackParamList} from '@/navigation/types';
+import type {RoundListItem} from '@/types/rounds';
+
+import {useNavigation} from '@react-navigation/native';
+import React,{useState} from 'react';
 import {ActivityIndicator,StyleSheet,Text,TouchableOpacity,View} from 'react-native';
 import {FlashList} from '@shopify/flash-list';
 
 import {CSafeAreaView,Header} from '@/components/atoms';
+import {ActiveRoundModal} from '@/components/molecules';
 import {darkTheme} from '@/assets/theme';
-import {useAvailableRounds} from '@/hooks/rounds';
-import type {RoundListItem} from '@/types/rounds';
+import {useActiveRound,useAvailableRounds} from '@/hooks/rounds';
+import {Paths} from '@/navigation/paths';
 
 export default function RoundsHomeScreen() {
+	const navigation = useNavigation<NavigationProp<RootStackParamList>>();
 	const {data,isError,isLoading,refetch} = useAvailableRounds();
+	const {data: activeRound} = useActiveRound();
+	const [showActiveRoundModal,setShowActiveRoundModal] = useState(false);
 
 	if (isLoading) {
 		return (
@@ -30,19 +39,53 @@ export default function RoundsHomeScreen() {
 	}
 
 	const items = data ?? [];
+	const hasActiveRound = !!activeRound?.data?.id;
+
+	const handleRoundPress = (item: RoundListItem) => {
+		// Si hay una caminata activa, no permitir navegar a otra
+		if (hasActiveRound) {
+			setShowActiveRoundModal(true);
+			return;
+		}
+
+		// Si no hay caminata activa, navegar al detalle/preview de la ronda
+		navigation.navigate(Paths.PreviewRound);
+	};
 
 	return (
-		<CSafeAreaView edges={['top']} style={{backgroundColor: darkTheme.background,flex: 1}}>
-			<Header title="Caminatas" />
-			<FlashList
-				contentContainerStyle={styles.list}
-				data={items}
-				estimatedItemSize={100}
-				ItemSeparatorComponent={() => <View style={{height: 12}} />}
-				keyExtractor={(i) => String(i.id)}
-				renderItem={({item}) => <RoundCard item={item} onPress={() => { }} />}
+		<>
+			<CSafeAreaView edges={['top']} style={{backgroundColor: darkTheme.background,flex: 1}}>
+				<Header title="Caminatas" />
+				<FlashList
+					contentContainerStyle={styles.list}
+					data={items}
+					ItemSeparatorComponent={() => <View style={{height: 12}} />}
+					keyExtractor={(i) => String(i.id)}
+					renderItem={({item}) => <RoundCard
+						item={item}
+						onPress={() => handleRoundPress(item)}
+					/>}
+				/>
+			</CSafeAreaView>
+
+			{/* Modal de ronda activa */}
+			<ActiveRoundModal
+				activeName={activeRound?.data?.name || 'Caminata desconocida'}
+				activeProgress={activeRound?.data?.progress ?
+					`${activeRound.data.checkpoints?.length || 0}/${activeRound.data.progress.total || 0} checkpoints completados` :
+					'Progreso no disponible'}
+				onCancel={() => setShowActiveRoundModal(false)}
+				onContinue={() => {
+					setShowActiveRoundModal(false);
+					if (activeRound?.data?.id) {
+						navigation.navigate(Paths.Walk,{
+							roundId: activeRound.data.id
+						});
+					}
+				}}
+				visible={showActiveRoundModal}
 			/>
-		</CSafeAreaView>
+		</>
 	);
 }
 
