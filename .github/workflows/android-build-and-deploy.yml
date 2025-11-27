@@ -77,6 +77,10 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: chmod +x android/gradlew
+      - name: 🛠️ Dar permisos de ejecución a Sentry CLI
+        run: |
+          chmod +x node_modules/@sentry/cli/bin/sentry-cli
+        shell: bash
 
       - name: Build Android App Bundle
         working-directory: android
