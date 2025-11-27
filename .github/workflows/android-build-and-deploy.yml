@@ -129,7 +129,7 @@ jobs:
           packageName: com.securify.app
           releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
           track: ${{ github.event.inputs.track || 'internal' }}
-          status: completed
+          status: draft
           inAppUpdatePriority: 2
           whatsNewDirectory: android/release-notes
 
