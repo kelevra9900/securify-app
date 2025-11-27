@@ -1,116 +1,116 @@
 name: Build and Deploy to Play Store (Internal Testing)
 
 on:
-    push:
-        branches:
-            - main
-            - develop
-        paths-ignore:
-            - "**.md"
-            - "docs/**"
-            - ".gitignore"
-    workflow_dispatch:
-        inputs:
-            track:
-                description: "Track de Play Store (internal, alpha, beta, production)"
-                required: true
-                default: "internal"
-                type: choice
-                options:
-                    - internal
-                    - alpha
-                    - beta
-                    - production
+  push:
+    branches:
+      - main
+      - develop
+    paths-ignore:
+      - "**.md"
+      - "docs/**"
+      - ".gitignore"
+  workflow_dispatch:
+    inputs:
+      track:
+        description: "Track de Play Store (internal, alpha, beta, production)"
+        required: true
+        default: "internal"
+        type: choice
+        options:
+          - internal
+          - alpha
+          - beta
+          - production
 
 jobs:
-    build-and-deploy:
-        name: Build Android App and Deploy to Play Store
-        runs-on: ubuntu-latest
+  build-and-deploy:
+    name: Build Android App and Deploy to Play Store
+    runs-on: ubuntu-latest
 
-        steps:
-            - name: Checkout repository
-              uses: actions/checkout@v4
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v4
-              with:
-                  node-version: "18"
-                  cache: "pnpm"
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.17.1
 
-            - name: Setup pnpm
-              uses: pnpm/action-setup@v4
-              with:
-                  version: 10.17.1
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "pnpm"
 
-            - name: Setup Java
-              uses: actions/setup-java@v4
-              with:
-                  distribution: "temurin"
-                  java-version: "17"
-                  cache: "gradle"
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+          cache: "gradle"
 
-            - name: Setup Android SDK
-              uses: android-actions/setup-android@v3
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
 
-            - name: Install dependencies
-              run: pnpm install --frozen-lockfile
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
 
-            - name: Create keystore directory
-              run: mkdir -p android/app/cert
+      - name: Create keystore directory
+        run: mkdir -p android/app/cert
 
-            - name: Setup keystore
-              env:
-                  KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-              run: |
-                  if [ -z "$KEYSTORE_BASE64" ]; then
-                    echo "KEYSTORE_BASE64 secret no está configurado"
-                    exit 1
-                  fi
-                  echo "$KEYSTORE_BASE64" | base64 -d > android/app/cert/cert.jks
+      - name: Setup keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "KEYSTORE_BASE64 secret no está configurado"
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > android/app/cert/cert.jks
 
-            - name: Create gradle.properties for signing
-              run: |
-                  cat >> android/gradle.properties << EOF
-                  RELEASE_STORE_FILE=./cert/cert.jks
-                  RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}
-                  RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}
-                  RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}
-                  EOF
+      - name: Create gradle.properties for signing
+        run: |
+          cat >> android/gradle.properties << EOF
+          RELEASE_STORE_FILE=./cert/cert.jks
+          RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_STORE_PASSWORD=${{ secrets.RELEASE_STORE_PASSWORD }}
+          RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}
+          EOF
 
-            - name: Grant execute permission for gradlew
-              run: chmod +x android/gradlew
+      - name: Grant execute permission for gradlew
+        run: chmod +x android/gradlew
 
-            - name: Build Android App Bundle
-              working-directory: android
-              run: |
-                  ./gradlew clean
-                  ./gradlew bundleRelease
+      - name: Build Android App Bundle
+        working-directory: android
+        run: |
+          ./gradlew clean
+          ./gradlew bundleRelease
 
-            - name: Upload AAB artifact
-              uses: actions/upload-artifact@v4
-              with:
-                  name: app-release
-                  path: android/app/build/outputs/bundle/release/app-release.aab
-                  retention-days: 7
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: android/app/build/outputs/bundle/release/app-release.aab
+          retention-days: 7
 
-            - name: Deploy to Play Store
-              uses: r0adkll/upload-google-play@v1
-              with:
-                  serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
-                  packageName: com.securify.app
-                  releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
-                  track: ${{ github.event.inputs.track || 'internal' }}
-                  status: completed
-                  inAppUpdatePriority: 2
-                  whatsNewDirectory: android/release-notes
-                  # mappingFile es opcional - se incluirá automáticamente si existe
+      - name: Deploy to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.securify.app
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: ${{ github.event.inputs.track || 'internal' }}
+          status: completed
+          inAppUpdatePriority: 2
+          whatsNewDirectory: android/release-notes
+          # mappingFile es opcional - se incluirá automáticamente si existe
 
-            - name: Build Summary
-              if: success()
-              run: |
-                  echo "## ✅ Build y Deploy Exitoso" >> $GITHUB_STEP_SUMMARY
-                  echo "" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Track**: ${{ github.event.inputs.track || 'internal' }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Package**: com.securify.app" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
-                  echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
+      - name: Build Summary
+        if: success()
+        run: |
+          echo "## ✅ Build y Deploy Exitoso" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Track**: ${{ github.event.inputs.track || 'internal' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Package**: com.securify.app" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: ${{ github.ref_name }}" >> $GITHUB_STEP_SUMMARY
