@@ -80,16 +80,6 @@ jobs:
       - name: 🔨 Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
-      # --- Ajuste para Sentry CLI ---
-      # Intenta la ruta estándar y luego la ruta de binarios de pnpm (.bin)
-      - name: 🛠️ Dar permisos de ejecución a Sentry CLI
-        run: |
-          # 1. Intentar la ruta de binarios de pnpm (más probable)
-          chmod +x node_modules/.bin/sentry-cli || \
-          # 2. Si falla, intentar la ruta directa de node_modules
-          chmod +x node_modules/@sentry/cli/bin/sentry-cli
-        shell: bash
-
       # --- Build de la Aplicación ---
 
       - name: 📦 Build Android App Bundle
