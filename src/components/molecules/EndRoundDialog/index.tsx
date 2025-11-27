@@ -38,21 +38,12 @@ export const EndRoundDialog: React.FC<EndRoundDialogProps> = ({
 	isLoading,
 	onCancel,
 	onConfirm,
-	roundName,
+	roundName = '',
 	visible,
 	willStopTracking,
 }) => {
 	const [showNotesInput,setShowNotesInput] = useState(false);
 	const [notes,setNotes] = useState('');
-
-	console.log('[DEBUG EndRoundDialog] Props:',{
-		completionPercentage,
-		isCompleted,
-		isLoading,
-		roundName,
-		visible,
-		willStopTracking
-	});
 
 	const handleConfirm = () => {
 		onConfirm(notes.trim() || undefined);
