@@ -34,26 +34,43 @@ jobs:
       - name: 🛠️ Setup pnpm
         uses: pnpm/action-setup@v4
 
-      - name: ⚙️ Setup Node.js
+      # --- CACHÉ Y SETUP ---
+
+      - name: ⚙️ Setup Node.js (con caché pnpm)
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "pnpm"
 
-      - name: ☕ Setup Java
+      - name: ☕ Setup Java (con caché Gradle)
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
-          cache: "gradle"
+          # NO usamos la caché de Gradle de este Action; usaremos 'actions/cache' para mayor control
+
+      - name: 💾 Cache Gradle Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ runner.os }}-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            gradle-${{ runner.os }}-
 
       - name: 🤖 Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      # --- CONFIGURACIÓN DE MEMORIA DE GRADLE ---
+      - name: 📈 Configurar Memoria del Daemon de Gradle
+        run: |
+          echo "org.gradle.jvmargs=-Xmx4096m -Dorg.gradle.daemon=true" >> android/gradle.properties
+
+      # --- INSTALACIÓN Y PREPARACIÓN ---
+
       - name: 📥 Install dependencies
         run: pnpm install --frozen-lockfile
-
-      # --- Configuración de Keystore (Firma) ---
 
       - name: 📂 Create keystore directory
         run: mkdir -p android/app/cert
@@ -80,15 +97,18 @@ jobs:
       - name: 🔨 Grant execute permission for gradlew
         run: chmod +x android/gradlew
 
+      # *** ELIMINADO: PASO DE CHMOD DE SENTRY (Se asume que la tarea fue deshabilitada en build.gradle) ***
+
       # --- Build de la Aplicación ---
 
       - name: 📦 Build Android App Bundle
         working-directory: android
         run: |
-          ./gradlew clean
-          ./gradlew bundleRelease
-        # Establece las variables de entorno de Sentry para autenticación
+          # Solo limpiar si es absolutamente necesario, la caché debería hacer el trabajo
+          # ./gradlew clean 
+          ./gradlew bundleRelease --no-daemon
         env:
+          # Variables de Sentry para el caso de que la tarea NO esté deshabilitada y necesite autenticarse
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
