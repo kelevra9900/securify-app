@@ -29,6 +29,7 @@ import {flashInfo} from '@/utils/flashMessageHelper';
 import {getCurrentPositionNative,requestLocationPermission,stopTracking} from '@/utils/tracking';
 import {useSelector} from 'react-redux';
 import type {RootState} from '@/store';
+import {persistor} from '@/store';
 import {clearCredentials} from '@/store/reducers/auth';
 import {clearProfile} from '@/store/reducers/user';
 import {disposeChatSocket} from '@/lib/socket/chat';
@@ -127,28 +128,37 @@ const FaceCameraLogout = ({navigation}: Props) => {
 						console.error('Reconocimiento falló',err);
 						flashInfo('Error','No se pudo procesar el reconocimiento facial.');
 					},
-				onSuccess: () => {
+				onSuccess: async () => {
 					// 1) Limpiar Query Cache del perfil
 					try {
+						await queryClient.cancelQueries();
 						queryClient.removeQueries({queryKey: ['current_user']});
 						queryClient.removeQueries({queryKey: ['me']});
 						queryClient.clear();
 					} catch { }
 
-					// 2) Limpiar MMKV storage del usuario
+					// 2) Limpiar MMKV storage del usuario y token
 					try {
 						storage.delete(MMKV_KEYS.user);
+						storage.delete(MMKV_KEYS.token);
 					} catch { }
 
-					// 3) Limpiar Redux
+					// 3) Detener tracking y cerrar sockets
+					try {
+						stopTracking();
+						disposeChatSocket();
+					} catch { }
+
+					// 4) Limpiar Redux
 					dispatch(clearCredentials());
 					dispatch(clearProfile());
 
-					// 4) Limpiar tracking y sockets
-					stopTracking();
-					disposeChatSocket();
+					// 5) Purgar storage persistido (AsyncStorage)
+					try {
+						await persistor.purge();
+					} catch { }
 
-					// 5) Navegar
+					// 6) Navegar
 					navigation.replace(Paths.SectorSelector);
 				},
 				},

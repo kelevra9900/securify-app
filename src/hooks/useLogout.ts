@@ -7,7 +7,9 @@ import {persistor} from '@/store';
 import {clearCredentials} from '@/store/reducers/auth';
 import {clearProfile} from '@/store/reducers/user';
 import {instance} from '@/data/instance';
-import {MMKV_KEYS, storage} from '@/utils/storage';
+import {MMKV_KEYS,storage} from '@/utils/storage';
+import {stopTracking} from '@/utils/tracking';
+import {disposeChatSocket} from '@/lib/socket/chat';
 import {useAppDispatch} from './store';
 
 export function useLogout() {
@@ -34,22 +36,31 @@ export function useLogout() {
 					queryClient.clear();
 				} catch { }
 
-				// 2) Limpiar MMKV storage del usuario
+				// 2) Limpiar MMKV storage del usuario y token
 				try {
 					storage.delete(MMKV_KEYS.user);
+					storage.delete(MMKV_KEYS.token);
 				} catch { }
 
-				// 3) Limpiar Redux
+				// 3) Detener tracking y cerrar sockets
+				try {
+					stopTracking();
+					disposeChatSocket();
+				} catch { }
+
+				// 4) Limpiar Redux
 				dispatch(clearCredentials());
 				dispatch(clearProfile());
 
-				// 4) Purgar storage persistido
-				try {await persistor.purge();} catch { }
+				// 5) Purgar storage persistido (AsyncStorage)
+				try {
+					await persistor.purge();
+				} catch { }
 
-				// 5) Quitar header Authorization de Axios para futuras requests
+				// 6) Quitar header Authorization de Axios para futuras requests
 				delete instance.defaults.headers.common.Authorization;
 
-				// 6) Reset de navegación al stack de Auth/Login
+				// 7) Reset de navegación al stack de Auth/Login
 				navigation.reset({index: 0,routes: [{name: 'Auth' as never}]});
 			};
 
