@@ -26,7 +26,6 @@ react {
 
     /* Bundling */
     // Ensure Gradle can find Node when running codegen/tasks
-    nodeExecutableAndArgs = ["/Users/administrador/.nvm/versions/node/v23.11.0/bin/node"]
     //   A list containing the node command and its flags. Default is just 'node'.
     // nodeExecutableAndArgs = ["node"]
     //
