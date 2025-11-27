@@ -28,35 +28,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: ⬇️ Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup pnpm
+      - name: 🛠️ Setup pnpm
         uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js
+      - name: ⚙️ Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "pnpm"
 
-      - name: Setup Java
+      - name: ☕ Setup Java
         uses: actions/setup-java@v4
         with:
           distribution: "temurin"
           java-version: "17"
           cache: "gradle"
 
-      - name: Setup Android SDK
+      - name: 🤖 Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Install dependencies
+      - name: 📥 Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Create keystore directory
+      # --- Configuración de Keystore (Firma) ---
+
+      - name: 📂 Create keystore directory
         run: mkdir -p android/app/cert
 
-      - name: Setup keystore
+      - name: 🔐 Setup keystore
         env:
           KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
         run: |
@@ -66,7 +68,7 @@ jobs:
           fi
           echo "$KEYSTORE_BASE64" | base64 -d > android/app/cert/cert.jks
 
-      - name: Create gradle.properties for signing
+      - name: 📝 Create gradle.properties for signing
         run: |
           cat >> android/gradle.properties << EOF
           RELEASE_STORE_FILE=./cert/cert.jks
@@ -75,33 +77,42 @@ jobs:
           RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}
           EOF
 
-      - name: Grant execute permission for gradlew
+      - name: 🔨 Grant execute permission for gradlew
         run: chmod +x android/gradlew
+
+      # --- Ajuste para Sentry CLI ---
+      # Intenta la ruta estándar y luego la ruta de binarios de pnpm (.bin)
       - name: 🛠️ Dar permisos de ejecución a Sentry CLI
         run: |
+          # 1. Intentar la ruta de binarios de pnpm (más probable)
+          chmod +x node_modules/.bin/sentry-cli || \
+          # 2. Si falla, intentar la ruta directa de node_modules
           chmod +x node_modules/@sentry/cli/bin/sentry-cli
         shell: bash
 
-      - name: Build Android App Bundle
+      # --- Build de la Aplicación ---
+
+      - name: 📦 Build Android App Bundle
         working-directory: android
         run: |
           ./gradlew clean
           ./gradlew bundleRelease
+        # Establece las variables de entorno de Sentry para autenticación
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          # Opcional: Si usas una instalación self-hosted de Sentry
-          # SENTRY_URL: ${{ secrets.SENTRY_URL }}
 
-      - name: Upload AAB artifact
+      # --- Despliegue ---
+
+      - name: ⬆️ Upload AAB artifact (Opcional)
         uses: actions/upload-artifact@v4
         with:
           name: app-release
           path: android/app/build/outputs/bundle/release/app-release.aab
           retention-days: 7
 
-      - name: Deploy to Play Store
+      - name: 🚀 Deploy to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
@@ -111,9 +122,8 @@ jobs:
           status: completed
           inAppUpdatePriority: 2
           whatsNewDirectory: android/release-notes
-          # mappingFile es opcional - se incluirá automáticamente si existe
 
-      - name: Build Summary
+      - name: 📝 Build Summary
         if: success()
         run: |
           echo "## ✅ Build y Deploy Exitoso" >> $GITHUB_STEP_SUMMARY
