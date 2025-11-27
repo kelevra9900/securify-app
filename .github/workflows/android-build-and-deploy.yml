@@ -87,6 +87,12 @@ jobs:
         run: |
           ./gradlew clean
           ./gradlew bundleRelease
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          # Opcional: Si usas una instalación self-hosted de Sentry
+          # SENTRY_URL: ${{ secrets.SENTRY_URL }}
 
       - name: Upload AAB artifact
         uses: actions/upload-artifact@v4
